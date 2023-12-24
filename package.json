@@ -1,0 +1,30 @@
+{
+  "name": "nite",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf dist && rollup -c"
+  },
+  "keywords": [],
+  "author": "Codefoxdev",
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.19.10",
+    "rollup": "^4.9.1"
+  },
+  "engines": {
+    "node": "^18.0.0 || >=20.0.0"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./loader": "./dist/loader/index.js"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/node": "^20.10.5",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3"
+  }
+}
