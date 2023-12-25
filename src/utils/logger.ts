@@ -12,11 +12,11 @@ enum logTypes {
   ERROR
 }
 
-export class Logger {
+class _Logger {
   service: string;
-  identifier: string;
+  identifier: string[] | null;
 
-  constructor(service: string, identifier?: string) {
+  constructor(service: string, identifier?: string[]) {
     this.service = service;
     this.identifier = identifier;
   }
@@ -40,8 +40,9 @@ export class Logger {
     return `\x1b[90m${hour}:${min}:${sec}\x1b[0m `;
   }
   #formatPrefix() {
-    if (!showColors) return `[${this.service}]${this.identifier ? `[${this.identifier}]` : ""}`;
-    return `\x1b[36m[${this.service}]${this.identifier ? `\x1b[90m[${this.identifier}]` : ""}\x1b[0m`;
+    const subs = this.identifier ? `[${this.identifier.join("][")}]` : "";
+    if (!showColors) return `[${this.service}]${subs}`; // ${this.identifier ? `[${this.identifier}]` : ""}
+    return `\x1b[36m[${this.service}]\x1b[90m${subs}\x1b[0m`; // ${this.identifier ? `\x1b[90m[${this.identifier}]` : ""}
   }
   info(...data: any[]) {
     this.#write(data, logTypes.INFO);
@@ -49,35 +50,37 @@ export class Logger {
   warn(...data: any[]) {
     this.#write(data, logTypes.WARN);
   }
-  error(...data: any[]) {
+  error(...data: any[]): false {
     // TODO: add stacktrace?
     this.#write(data, logTypes.ERROR);
     return false; // To be able to do: return logger.error(...);
   }
 }
 
-export class PartialLogger extends Logger {
-  constructor(service: string) {
-    super(service);
-  }
-  infoName(name: string, ...data: any[]) {
-    this.identifier = name;
-    this.info(...data);
-  }
-  warnName(name: string, ...data: any[]) {
-    this.identifier = name;
-    this.warn(...data);
-  }
-  errorName(name: string, ...data: any[]) {
-    this.identifier = name;
-    this.error(...data);
-    return false;
+export class Logger extends _Logger {
+  constructor(identifier: string[]) {
+    super("nite", identifier);
   }
 }
 
-export class PluginLogger extends PartialLogger {
-  constructor() {
-    super("plugins");
+export class PartialLogger extends Logger {
+  base: string[];
+  constructor(baseIdentifier: string[]) {
+    super(baseIdentifier);
+    this.base = baseIdentifier;
+  }
+  infoName(name: string[] | string, ...data: any[]) {
+    this.identifier = [...this.base, ...(Array.isArray(name) ? name : [name])];
+    this.info(...data);
+  }
+  warnName(name: string[] | string, ...data: any[]) {
+    this.identifier = [...this.base, ...(Array.isArray(name) ? name : [name])];
+    this.warn(...data);
+  }
+  errorName(name: string[] | string, ...data: any[]): false {
+    this.identifier = [...this.base, ...(Array.isArray(name) ? name : [name])];
+    this.error(...data);
+    return false;
   }
 }
 

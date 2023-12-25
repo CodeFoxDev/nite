@@ -38,3 +38,9 @@
       - nite 'post'
   - Config
 - build
+  
+- https://nodejs.org/api/module.html#customization-hooks
+- https://rollupjs.org/plugin-development
+- https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js#L315
+- https://vitejs.dev/guide/api-plugin.html#plugin-ordering
+- https://esbuild.github.io/api/#js-sync

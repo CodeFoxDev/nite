@@ -1,14 +1,51 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { cwd } from "node:process";
+import { Logger } from "utils/logger";
+
 import type { BuildOptions as ESBuildOptions } from "esbuild";
+import type { RollupOptions } from "rollup";
+import type { Plugin } from "./plugins/plugin";
+
+// Valid names for the config file
+const ids = ["nite.config.js", "nite.config.mjs"];
+const logger = new Logger(["config"]);
 
 export function defineConfig(config: UserConfig): UserConfig {
   return config;
 }
 
+export async function readConfig(): Promise<ResolvedConfig | false> {
+  let id: string;
+  for (const _id of ids) {
+    if (!existsSync(resolve(cwd(), _id))) continue;
+    id = resolve(cwd(), _id);
+    break;
+  }
+
+  let config: UserConfig;
+  try {
+    config = (await import(`file://${id}`)).default;
+  } catch (err) {
+    return logger.error(`Failed to load config from: ${id}, err:`, err);
+  }
+
+  if (!config) return logger.error("Received empty config, while trying to resolve it");
+  //logger.info(config);
+  // load defaults
+  return config;
+}
+
 export interface UserConfig {
   root?: string;
+  mode?: "dev" | "build";
+  cacheDir?: string;
+  build?: {
+    outDir?: string;
+    rollupOptions?: RollupOptions;
+  };
+  plugins?: Array<Plugin>;
   esbuild?: ESBuildOptions;
-  plugins?: Array<object>;
-  resolver?: {};
 }
 
 export type ResolvedConfig = Readonly<UserConfig>;
