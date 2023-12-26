@@ -1,3 +1,4 @@
+import type { TsconfigRaw } from "esbuild";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { cwd } from "process";
@@ -7,11 +8,11 @@ interface packageContents {
   type: string;
 }
 
-let found: packageContents | null = null;
+let foundPackage: packageContents | null = null;
 
 // Add proper default values
 export function packageJSON(): null | packageContents {
-  if (found != null) return found;
+  if (foundPackage != null) return foundPackage;
   const id = join(cwd(), "package.json");
   if (!id) return null;
   const src = readFileSync(id, { encoding: "utf-8" });
@@ -19,6 +20,21 @@ export function packageJSON(): null | packageContents {
   try {
     obj = JSON.parse(src);
   } catch {}
-  found = obj;
+  foundPackage = obj;
+  return obj;
+}
+
+let foundTsconfig: Partial<TsconfigRaw> | null = null;
+
+export function tsconfigJSON(): null | Partial<TsconfigRaw> {
+  if (foundTsconfig != null) return foundTsconfig;
+  const id = join(cwd(), "tsconfig.json");
+  if (!id) return null;
+  const src = readFileSync(id, { encoding: "utf-8" });
+  let obj: Partial<TsconfigRaw> | null;
+  try {
+    obj = JSON.parse(src);
+  } catch {}
+  foundTsconfig = obj;
   return obj;
 }

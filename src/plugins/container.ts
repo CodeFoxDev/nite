@@ -1,10 +1,9 @@
 // https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js
 
 // TODO: modify plugin to only include the useable methods
+import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from "./plugin";
 import { readFile } from "node:fs";
-import type { Plugin, SortedPlugin, PluginContext, PluginContainer } from "./plugin";
 import { PartialLogger } from "utils/logger";
-import { sortPluginsHook } from "./sort";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 logger.condition(() => false);
@@ -25,20 +24,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
     // TODO: Add env check for logging
     info: (...args) => _pluginLogger.infoName(plugin?.name, ...args),
     warn: (...args) => _pluginLogger.warnName(plugin?.name, ...args),
-    error(err) {
-      if (typeof err == "string") err = { message: err };
-      _pluginLogger.errorName(plugin?.name, err);
-    },
-    debug(...args) {
-      // TODO: Add env check for logging
-    }
-
-    /* resolve(id, importer, options = { skipSelf: false }) {},
-    async load(options) {
-      return {
-        code: ""
-      };
-    } */
+    error: (...args) => _pluginLogger.errorName(plugin?.name, ...args)
   };
 
   const container: PluginContainer = {
@@ -118,4 +104,33 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
   };
 
   return container;
+}
+
+export const hooks = ["config", "configResolved", "resolveId", "load", "transform"];
+
+export function sortPluginsHook(plugins: Plugin[], hook: Hook): SortedPlugin[] {
+  let sorted: SortedPlugin[][] = [[], [], [], [], [], []];
+
+  for (const plugin of plugins) {
+    const builtin = plugin.name.startsWith("nite:") ? 1 : 0;
+    let enforce = 2;
+    const hookMethod = plugin[hook];
+    if (typeof hookMethod == "object") enforce = hookMethod.enforce == "pre" ? 0 : hookMethod.enforce == "post" ? 4 : 2;
+    sorted[enforce + builtin].push(stripPlugin(plugin));
+  }
+  return sorted.flat(2);
+}
+
+function stripPlugin(plugin: Plugin): SortedPlugin {
+  let res: SortedPlugin = { name: plugin.name };
+  for (const prop in plugin) if (!hooks.includes(prop)) res[prop] = plugin[prop];
+
+  for (const hook of hooks) {
+    if (!plugin[hook]) continue;
+    const hookMethod = plugin[hook];
+    if (typeof hookMethod == "function") res[hook] = hookMethod;
+    else res[hook] = hookMethod.handler;
+  }
+
+  return res;
 }

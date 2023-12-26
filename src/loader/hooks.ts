@@ -4,7 +4,7 @@ import type { MessagePort } from "node:worker_threads";
 import { readConfig } from "config";
 import { PluginContainer, initializePlugins } from "plugins/plugin";
 import { Logger, PartialLogger } from "utils/logger";
-import { FileUrl } from "utils/extension";
+import { FileUrl, normalizePath } from "utils/id";
 import { packageJSON } from "utils/package";
 
 type nextResolve = (specifier: string, context?: ResolveHookContext) => ResolveFnOutput | Promise<ResolveFnOutput>;
@@ -25,16 +25,18 @@ export async function initialize({ number, port }: { number: number; port: Messa
 export async function resolve(specifier: string, context: ResolveHookContext, nextResolve: nextResolve): Promise<ResolveFnOutput> {
   const { parentURL = null } = context;
   if (!container) return nextResolve(specifier);
-  const res = await container.resolveId(specifier, parentURL);
-  if (res != null && typeof res == "object")
-    return {
-      shortCircuit: true,
-      url: res.id
-    };
+  const cUrl = specifier.replace("file:///", "");
+  const cParent = parentURL?.replace("file:///", "");
+  const res = await container.resolveId(cUrl, cParent);
+  // Let nodejs resolve if nothing is returned
+  if (!res || (typeof res == "object" && !res.id)) return nextResolve(specifier);
+  let id = typeof res == "string" ? res : res.id;
+  if (!id.startsWith("file:///")) id = "file:///" + id;
 
-  // Inject resolveId hooks
-
-  return nextResolve(specifier);
+  return {
+    shortCircuit: true,
+    url: normalizePath(id)
+  };
 }
 
 export async function load(url: string, context: LoadHookContext, nextLoad: nextLoad): Promise<LoadFnOutput> {
@@ -43,7 +45,6 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   const cUrl = url.replace("file:///", "");
   let lRes = await container.load(cUrl);
   if (!lRes) return nextLoad(url, context);
-
   // Inject transform hooks
   let source = typeof lRes == "string" ? lRes : lRes.code;
   const format = determineFormat(url, context, source);

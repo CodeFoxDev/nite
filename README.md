@@ -8,6 +8,7 @@
       - [x] configResolved
       - [x] resolveId
       - [x] load
+        - Default load: add support for queries in id
       - [x] transform
       - [ ] moduleParsed
       - [ ] shouldTransformCachedModule
@@ -45,8 +46,28 @@
         }
         ```
   - Config
-    - Parse config file (if it is: ts, etc.)
+    - [ ] Load config file and add proper types and options
+    - [ ] Parse config file (if it is: ts, etc.)
+    - [x] Load / Parse package.json for determining package type (module, commonjs, etc.)
+    - [ ] Load / Parse tsconfig.json for esbuild
 - build
+- DX
+  - Proper error handling
+    - Nodejs operations with errorcodes
+    - Nite errors with proper error messages
+      - Code 'chunks' where the error occured (similar to esbuild and wmr)
+        Generate code chunks from e.g. this:
+        ```
+        file:///C:/Users/Robin/Documents/Programming/Home/homecontrols/api/test.ts:2
+        export function test(log: string): boolean {
+                                ^
+
+        SyntaxError: Unexpected token ':'
+            at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:152:18)
+            at ModuleLoader.moduleProvider (node:internal/modules/esm/loader:298:14)
+
+        Node.js v18.19.0
+        ```
   
 - https://nodejs.org/api/module.html#customization-hooks
 - https://rollupjs.org/plugin-development

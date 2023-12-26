@@ -1,6 +1,7 @@
 import PluginESBuild from "./builtin/esbuild";
-import { Plugin } from "./plugin";
+import PluginJSON from "./builtin/json";
+import type { Plugin } from "./plugin";
 
 export function getBuiltinPlugins(): Plugin[] {
-  return [PluginESBuild()];
+  return [PluginJSON(), PluginESBuild()];
 }

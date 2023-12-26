@@ -2,7 +2,6 @@ import type * as rollup from "rollup";
 import type { ResolvedConfig, UserConfig } from "config";
 import { Logger } from "utils/logger";
 import { getBuiltinPlugins } from "./builtins";
-import { sortPlugins } from "./sort";
 import { createPluginContainer } from "./container";
 
 const logger = new Logger(["plugins", "container"]);
@@ -21,8 +20,20 @@ export function loadPlugins(config: UserConfig): Plugin[] {
   return [...configPlugins, ...builtinPlugins];
 }
 
+export function sortPlugins(plugins: Plugin[]): Plugin[] {
+  let sorted = [[], [], [], [], [], []];
+
+  for (const plugin of plugins) {
+    const enfore = plugin.enforce == "pre" ? 0 : plugin.enforce == "post" ? 4 : 2;
+    const builtin = plugin.name.startsWith("nite:") ? 1 : 0;
+    const index = enfore + builtin;
+    sorted[index].push(plugin);
+  }
+  return sorted.flat(2);
+}
+
 export type Hook = "config" | "configResolved" | "resolveId" | "load" | "transform";
-export const hooks = ["config", "configResolved", "resolveId", "load", "transform"];
+export type Format = "commonjs" | "module";
 
 export interface Plugin /*  extends rollup.Plugin */ {
   name: string;
@@ -72,16 +83,23 @@ export type SortedPlugin = {
 // https://rollupjs.org/plugin-development/#plugin-context
 export interface PluginContext {
   // Logging
-  debug(...args: any[]): void;
+  //debug(...args: any[]): void;
   info(...args: any[]): void;
   warn(...args: any[]): void;
-  error(msg: { message: string } | string): void;
+  error(...msg: string[]): void;
 
   // Metadata from rollup (and potentially from nite?)
   meta: {
     rollupVersion: string;
     watchMode: boolean;
   };
+
+  /* parse(
+    code: string,
+    options?: {
+      allowReturnOutsideFunction?: boolean;
+    }
+  ); */
 
   // Methods
   /* resolve(id: string, importer?: string, options?: { skipSelf?: boolean; isEntry?: boolean }): rollup.ResolvedId;
@@ -108,9 +126,9 @@ export type ResolveIdHook = (
   source: string,
   importer: string | undefined,
   options: { isEntry: boolean }
-) => PromiseOpt<string | null | void | false | { id: string }>;
-export type LoadHook = (this: PluginContext, id: string) => PromiseOpt<string | null | void | { code: string }>;
-export type TransformHook = (this: PluginContext, source: string, id: string) => PromiseOpt<string | null | void | { code: string }>;
+) => PromiseOpt<string | null | void | false | { id: string; format?: Format }>;
+export type LoadHook = (this: PluginContext, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
+export type TransformHook = (this: PluginContext, source: string, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
 
 export type SortedPlugins = SortedPlugin[];
 

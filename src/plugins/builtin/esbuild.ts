@@ -2,37 +2,30 @@ import { transform } from "esbuild";
 import type { ResolvedConfig } from "../../config";
 import type { Plugin } from "../plugin";
 import { readFileSync } from "node:fs";
+import { parseId } from "utils/id";
 
 export default function PluginESBuild(): Plugin {
   let config: ResolvedConfig = {};
 
   return {
     name: "nite:esbuild",
-    enforce: "pre",
 
     configResolved(_config) {
       config = _config;
     },
 
-    resolveId(id, importer) {
-      //console.log(id);
-      //if (id.endsWith("ts")) return { id };
-    },
-
-    load(id) {
-      //if (!id.endsWith("ts")) return;
-      if (!id.startsWith("C:/")) return;
-      const src = readFileSync(id, { encoding: "utf-8" });
-      return {
-        code: src
-      };
-    },
-
     async transform(src, id) {
-      if (!id.endsWith("ts")) return;
+      const parsed = parseId(id);
+      if (!parsed.loader || parsed.external) return;
+      // TODO: improve speed (caching?)
+      const transformed = await transform(src, {
+        loader: parsed.loader
+      });
+      // Log warnings
+      // Add jsx inject
       //this.info(id);
       return {
-        code: "// Transformed by: nite:esbuild \n" + src
+        code: transformed.code
       };
     }
   };
