@@ -84,7 +84,8 @@ export interface PluginContext {
   };
 
   // Methods
-  resolve(id: string, importer: string, options: { skipSelf?: boolean }): void; // Resolves the filename for the given id, calls the resolveId method on plugins
+  /* resolve(id: string, importer?: string, options?: { skipSelf?: boolean; isEntry?: boolean }): rollup.ResolvedId;
+  load(options: { id: string }): Promise<rollup.ModuleInfo>; */
 }
 
 export interface PluginContainer {

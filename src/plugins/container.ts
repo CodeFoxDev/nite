@@ -1,11 +1,13 @@
 // https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js
 
 // TODO: modify plugin to only include the useable methods
+import { readFile } from "node:fs";
 import type { Plugin, SortedPlugin, PluginContext, PluginContainer } from "./plugin";
 import { PartialLogger } from "utils/logger";
-import { sortPlugins, sortPluginsHook } from "./sort";
+import { sortPluginsHook } from "./sort";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
+logger.condition(() => false);
 
 export function createPluginContainer(plugins: Plugin[], opts = {}) {
   if (!Array.isArray(plugins)) plugins = [plugins];
@@ -14,6 +16,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
   const _pluginLogger = new PartialLogger(["plugins"]);
 
   // The value of the `this` property in a plugin hook
+  // TODO: Make ctx immutable when passed in the hooks? or just create copy?
   const ctx: PluginContext = {
     meta: {
       rollupVersion: "4.9.1", // TODO: read this from package.json?
@@ -28,14 +31,20 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
     },
     debug(...args) {
       // TODO: Add env check for logging
-    },
+    }
 
-    resolve(id, importer, options = { skipSelf: false }) {}
+    /* resolve(id, importer, options = { skipSelf: false }) {},
+    async load(options) {
+      return {
+        code: ""
+      };
+    } */
   };
 
   const container: PluginContainer = {
     ctx,
 
+    // Hooks
     config(config, env) {
       let _sorted = sortPluginsHook(plugins, "config");
       for (plugin of _sorted) {
@@ -72,12 +81,11 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       }
       return resolved ? { id: resolved } : null;
     },
-
     async transform(code, id) {
       let _sorted = sortPluginsHook(plugins, "transform");
       for (plugin of _sorted) {
         if (!plugin.transform) continue;
-        const res = plugin.transform.call(ctx, code, id);
+        const res = await plugin.transform.call(ctx, code, id);
         if (!res) continue;
         logger.infoName("transform", { id, plugin: plugin.name });
         if (typeof res == "object") code = res.code;
@@ -88,13 +96,24 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
     },
     async load(id) {
       let _sorted = sortPluginsHook(plugins, "load");
+      // Execute load hooks on plugins
       for (plugin of _sorted) {
         if (!plugin.load) continue;
-        const res = plugin.load.call(ctx, id);
+        const res = await plugin.load.call(ctx, id);
         if (!res) continue;
         logger.infoName("load", { id, plugin: plugin.name });
         return res;
       }
+      // Execute default load
+      return new Promise((resolve) => {
+        readFile(id, (err, data) => {
+          if (!err) return resolve(data.toString());
+          // TODO: Implement proper error handling
+          // also don't error if it's a module (e.g. node:fs, rollup, etc.)
+          //logger.errorName("load", "Failed to load file using default hook");
+          resolve(null);
+        });
+      });
     }
   };
 

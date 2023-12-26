@@ -4,11 +4,26 @@
   - Custom esm module loader
   - Rollup like plugin integrations
     - hooks
-      - config
-      - configResolved
-      - resolveId
-      - load
-      - transform
+      - [x] config
+      - [x] configResolved
+      - [x] resolveId
+      - [x] load
+      - [x] transform
+      - [ ] moduleParsed
+      - [ ] shouldTransformCachedModule
+      - [ ] watchChange
+    - Context
+      - [ ] this.resolve
+      - [ ] this.load
+      - [ ] this.getFileName
+      - [ ] this.getModuleInfo
+      - [ ] this.addWatchFile
+      - [ ] this.getWatchFiles
+      - [x] this.info
+      - [x] this.warn
+      - [x] this.error
+      - [ ] this.debug
+    - ordering
     - loading
       - Allow rollup-only plugins to load with `apply="buid"` and `enfore="post"`
         ```js
@@ -29,14 +44,8 @@
           ]
         }
         ```
-    - ordering
-      - user 'pre'
-      - nite 'pre'
-      - user
-      - nite
-      - user 'post'
-      - nite 'post'
   - Config
+    - Parse config file (if it is: ts, etc.)
 - build
   
 - https://nodejs.org/api/module.html#customization-hooks

@@ -15,12 +15,14 @@ enum logTypes {
 class _Logger {
   service: string;
   identifier: string[] | null;
+  #conditionFn: Function;
 
   constructor(service: string, identifier?: string[]) {
     this.service = service;
     this.identifier = identifier;
   }
   #write(data: any[], type: logTypes) {
+    if (!this.#shouldLog()) return;
     if (showTimestamps) stdout.write(this.#formatTimeStamp());
     stdout.write(this.#formatPrefix());
     if (showColors) {
@@ -44,6 +46,10 @@ class _Logger {
     if (!showColors) return `[${this.service}]${subs}`; // ${this.identifier ? `[${this.identifier}]` : ""}
     return `\x1b[36m[${this.service}]\x1b[90m${subs}\x1b[0m`; // ${this.identifier ? `\x1b[90m[${this.identifier}]` : ""}
   }
+  #shouldLog() {
+    if (!this.#conditionFn) return true;
+    return this.#conditionFn();
+  }
   info(...data: any[]) {
     this.#write(data, logTypes.INFO);
   }
@@ -54,6 +60,10 @@ class _Logger {
     // TODO: add stacktrace?
     this.#write(data, logTypes.ERROR);
     return false; // To be able to do: return logger.error(...);
+  }
+  condition(cb: Function) {
+    if (typeof cb != "function") return;
+    this.#conditionFn = cb;
   }
 }
 
