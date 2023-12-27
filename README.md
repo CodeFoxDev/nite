@@ -4,8 +4,8 @@
   - Custom esm module loader
   - Rollup like plugin integrations
     - hooks
-      - [x] config
-      - [x] configResolved
+      > Rollup hooks
+      - [ ] options
       - [x] resolveId
       - [x] load
         - Default load: add support for queries in id
@@ -13,7 +13,11 @@
       - [ ] moduleParsed
       - [ ] shouldTransformCachedModule
       - [ ] watchChange
+      > Custom hooks
+      - [x] config
+      - [x] configResolved
     - Context
+      > Rollup context
       - [ ] this.resolve
       - [ ] this.load
       - [ ] this.parse
@@ -25,6 +29,10 @@
       - [x] this.warn
       - [x] this.error
       - [ ] this.debug
+      > Custom context
+      - [ ] this.cache
+        - [ ] this.cache.get
+        - [ ] this.cache.set
     - ordering
     - loading
       - Allow rollup-only plugins to load with `apply="buid"` and `enfore="post"`
@@ -69,6 +77,11 @@
 
         Node.js v18.19.0
         ```
+- Cache
+  - Bundle the library into single file (like vite)
+  - Optimize code
+  - Change file names to reflect the library
+  - Add config option to exclude/include libraries (optimizeDeps from vite)
   
 # Features
 - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?

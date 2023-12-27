@@ -1,3 +1,4 @@
+import type { CachedModule, EntryInfo } from "./cache";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
@@ -8,43 +9,47 @@ const logger = new PartialLogger(["cache"]);
 let cacheDir: string = null;
 let entries: EntryInfo[] = [];
 
-export async function isCached(id: string) {
-  if (!id.includes("node_modules")) return false; // Currently only caching node_modules
+export async function get(id: string): Promise<Required<CachedModule> | null> {
+  if (!id.includes("node_modules")) return null;
   if (!cacheDir) cacheDir = await getCacheDir();
   if (entries.length == 0) getEntries();
-  const i = getModuleInfo(id);
-  const found = entries.find((e) => e.name == i.name && e.version == i.version && e.file == i.file);
-  return !!found;
+  const info = getModuleInfo(id);
+  const entry = getEntryInfo(info);
+  const found = entries.find((e) => e.name == info.name && e.version == info.version && e.file == info.file);
+  if (!found) return null;
+  const code = getCode(entry);
+  if (!code) return null;
+  return {
+    ...entry,
+    code
+  };
 }
 
-export async function getCached(id: string) {
+export async function set(id: string, code: string): Promise<Required<CachedModule>> {
+  if (!id.includes("node_modules")) return null;
   if (!cacheDir) cacheDir = await getCacheDir();
   const info = getModuleInfo(id);
-  if (!info) return logger.error(`Tried to get module with id: ${id}, but was not found`);
-  const i = getEntryInfo(info);
-  const path = join(cwd(), cacheDir, "temp", getFileId(i));
+  let entry: EntryInfo = {
+    ...info,
+    id: Math.random().toString(36).slice(2)
+  };
+  entries.push(entry);
+  writeFileSync(join(cwd(), cacheDir, "modules.json"), JSON.stringify(entries, null, "\t"));
+  writeFileSync(join(cwd(), cacheDir, "temp", getFileId(entry)), code);
+  return {
+    ...entry,
+    code
+  };
+}
+
+function getCode(info: EntryInfo) {
+  const path = join(cwd(), cacheDir, "temp", getFileId(info));
 
   try {
     return readFileSync(path, { encoding: "utf-8" });
   } catch {
-    return logger.error(`Tried to get module with id: ${i.id}, but was not found`);
+    return logger.error(`Tried to get module with id: ${info.id}, but was not found`);
   }
-}
-
-export async function addCached(id: string, src: string) {
-  if (!id.includes("node_modules")) return false; // Currently only caching node_modules
-  if (!cacheDir) cacheDir = await getCacheDir();
-  const i = getModuleInfo(id);
-  const entry: EntryInfo = {
-    id: Math.random().toString(36).slice(2),
-    name: i.name,
-    version: i.version,
-    file: i.file
-  };
-  entries.push(entry);
-  writeFileSync(join(cwd(), cacheDir, "modules.json"), JSON.stringify(entries, null, 4));
-  writeFileSync(join(cwd(), cacheDir, "temp", getFileId(entry)), src);
-  return true;
 }
 
 async function getCacheDir() {
@@ -59,7 +64,7 @@ function getEntries() {
   return entries;
 }
 
-function getEntryInfo(i: CachedModuleInfo): EntryInfo | null {
+function getEntryInfo(i: CachedModule): EntryInfo | null {
   const found = entries.find((e) => e.name == i.name && e.version == i.version && e.file == i.file);
   if (!found) return null;
   return found;
@@ -87,7 +92,7 @@ function getModulesJson(): EntryInfo[] {
 const VERSION_REGEX = /\/([^\/]*?)@([0-9.]*?)\//;
 const PATH_REGEX = /\/node_modules(.*)/;
 
-function getModuleInfo(id: string): CachedModuleInfo | null {
+function getModuleInfo(id: string): CachedModule | null {
   if (!id) return null;
   const match = id.match(VERSION_REGEX);
   if (!match) return null;
@@ -99,7 +104,7 @@ function getModuleInfo(id: string): CachedModuleInfo | null {
 }
 
 // /node_modules/.pnpm/ws@8.15.1/node_modules/ws/wrapper.mjs
-const info: CachedModuleInfo = {
+const info: CachedModule = {
   id: "vm83z70dcvc",
   name: "ws",
   version: "8.15.1",
@@ -107,20 +112,10 @@ const info: CachedModuleInfo = {
   //hash: { sha256: "e37bddaf6d40a3b2ee107906f792cc5117e543cba776fa25f7aeeb3908637f7c" }
 };
 
-// TODO: Also add format, extension, etc.?
-interface CachedModuleInfo {
-  /**
-   * The short file id of the module, is null if it hasn't been cached
-   */
-  id?: string;
-  name: string;
-  version: string;
-  file: string;
-  hash?: {
-    sha256: string;
-  };
-}
-
-interface EntryInfo extends CachedModuleInfo {
-  id: string;
+function wait(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(true);
+    }, ms);
+  });
 }

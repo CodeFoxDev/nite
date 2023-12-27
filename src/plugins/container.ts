@@ -4,7 +4,7 @@
 import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from "./plugin";
 import { readFile } from "node:fs";
 import { PartialLogger } from "utils/logger";
-import { isCached, getCached, addCached } from "cache/index";
+import * as cache from "cache";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 logger.condition(() => false);
@@ -22,6 +22,16 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       rollupVersion: "4.9.1", // TODO: read this from package.json?
       watchMode: false
     },
+
+    cache: {
+      async get(id) {
+        return cache.get(id);
+      },
+      async set(id, src) {
+        return cache.set(id, src);
+      }
+    },
+
     // TODO: Add env check for logging
     info: (...args) => _pluginLogger.infoName(plugin?.name, ...args),
     warn: (...args) => _pluginLogger.warnName(plugin?.name, ...args),
@@ -147,9 +157,4 @@ function stripPlugin(plugin: Plugin): SortedPlugin {
   }
 
   return res;
-}
-
-interface ModuleInfo {
-  id: string;
-  code: string | null;
 }

@@ -15,12 +15,15 @@ export default function PluginESBuild(): Plugin {
     },
 
     async transform(src, id) {
+      const cached = await this.cache.get(id);
+      if (cached) return cached;
       const parsed = parseId(id);
       if (!parsed.loader) return;
       // TODO: improve speed (caching?)
       const transformed = await transform(src, {
         loader: parsed.loader
       });
+      this.cache.set(id, transformed.code);
       // Log warnings
       // Add jsx inject
       //this.info(id);

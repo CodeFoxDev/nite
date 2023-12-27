@@ -1,5 +1,6 @@
 import type * as rollup from "rollup";
 import type { ResolvedConfig, UserConfig } from "config";
+import type { CachedModule } from "cache/cache";
 import { Logger } from "utils/logger";
 import { getBuiltinPlugins } from "./builtins";
 import { createPluginContainer } from "./container";
@@ -34,6 +35,8 @@ export function sortPlugins(plugins: Plugin[]): Plugin[] {
 
 export type Hook = "config" | "configResolved" | "resolveId" | "load" | "shouldTransformCachedModule" | "transform";
 export type Format = "commonjs" | "module";
+
+// Plugins
 
 export interface Plugin /*  extends rollup.Plugin */ {
   name: string;
@@ -81,25 +84,7 @@ export type SortedPlugin = {
   transform?: TransformHook;
 };
 
-// Accessed by the `this` property in a plugin hook
-// https://rollupjs.org/plugin-development/#plugin-context
-export interface PluginContext {
-  // Logging
-  //debug(...args: any[]): void;
-  info(...args: any[]): void;
-  warn(...args: any[]): void;
-  error(...msg: string[]): void;
-
-  // Metadata from rollup (and potentially from nite?)
-  meta: {
-    rollupVersion: string;
-    watchMode: boolean;
-  };
-
-  // Methods
-  /* resolve(id: string, importer?: string, options?: { skipSelf?: boolean; isEntry?: boolean }): rollup.ResolvedId;
-  load(options: { id: string }): Promise<rollup.ModuleInfo>; */
-}
+// Plugin container
 
 export interface PluginContainer {
   ctx: PluginContext;
@@ -114,6 +99,33 @@ export interface PluginContainer {
   transform(code: string, id: string): Promise<rollup.TransformResult>;
 }
 
+export interface PluginContext {
+  // Accessed by the `this` property in a plugin hook
+  // https://rollupjs.org/plugin-development/#plugin-context
+
+  //debug(...args: any[]): void;
+  info(...args: any[]): void;
+  warn(...args: any[]): void;
+  error(...msg: string[]): void;
+
+  // Metadata from rollup (and potentially from nite?)
+  meta: {
+    rollupVersion: string;
+    watchMode: boolean;
+  };
+
+  cache: {
+    get(id: string): Promise<Required<CachedModule> | null>;
+    set(id: string, src: string): Promise<Required<CachedModule>>;
+  };
+
+  // Methods
+  /* resolve(id: string, importer?: string, options?: { skipSelf?: boolean; isEntry?: boolean }): rollup.ResolvedId;
+  load(options: { id: string }): Promise<rollup.ModuleInfo>; */
+}
+
+// Hook methods
+
 export type ConfigHook = (this: PluginContext, config: UserConfig, env: { mode: string; command: string }) => UserConfig | null | void;
 export type ConfigResolvedHook = (this: PluginContext, config: UserConfig) => void;
 
@@ -126,6 +138,8 @@ export type ResolveIdHook = (
 export type LoadHook = (this: PluginContext, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
 export type ShouldTransformCachedModuleHook = (options: { code: string; id: string }) => Promise<boolean | null | void>;
 export type TransformHook = (this: PluginContext, source: string, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
+
+// Helpers
 
 export type SortedPlugins = SortedPlugin[];
 
