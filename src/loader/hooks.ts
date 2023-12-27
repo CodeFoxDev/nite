@@ -1,7 +1,7 @@
 // Runs off of main thread
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput } from "node:module";
 import type { MessagePort } from "node:worker_threads";
-import { readConfig } from "config";
+import { config } from "config";
 import { PluginContainer, initializePlugins } from "plugins/plugin";
 import { Logger, PartialLogger } from "utils/logger";
 import { FileUrl, normalizePath } from "utils/id";
@@ -14,12 +14,12 @@ const logger = new PartialLogger(["loader"]);
 let container: PluginContainer | null;
 
 export async function initialize({ number, port }: { number: number; port: MessagePort }) {
-  const config = await readConfig();
-  if (config == false) {
+  const _config = await config();
+  if (_config == false) {
     port.postMessage("Error when loading config, quitting...");
     return;
   }
-  container = initializePlugins(config);
+  container = initializePlugins(_config);
 }
 
 export async function resolve(specifier: string, context: ResolveHookContext, nextResolve: nextResolve): Promise<ResolveFnOutput> {

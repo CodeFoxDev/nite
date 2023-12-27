@@ -1,7 +1,7 @@
 import type { TsconfigRaw } from "esbuild";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { cwd } from "process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
 
 interface packageContents {
   name: string;

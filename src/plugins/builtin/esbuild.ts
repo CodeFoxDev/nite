@@ -16,7 +16,7 @@ export default function PluginESBuild(): Plugin {
 
     async transform(src, id) {
       const parsed = parseId(id);
-      if (!parsed.loader || parsed.external) return;
+      if (!parsed.loader) return;
       // TODO: improve speed (caching?)
       const transformed = await transform(src, {
         loader: parsed.loader

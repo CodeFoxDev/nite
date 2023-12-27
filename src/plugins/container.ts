@@ -4,6 +4,7 @@
 import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from "./plugin";
 import { readFile } from "node:fs";
 import { PartialLogger } from "utils/logger";
+import { isCached, getCached, addCached } from "cache/index";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 logger.condition(() => false);
@@ -67,19 +68,6 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       }
       return resolved ? { id: resolved } : null;
     },
-    async transform(code, id) {
-      let _sorted = sortPluginsHook(plugins, "transform");
-      for (plugin of _sorted) {
-        if (!plugin.transform) continue;
-        const res = await plugin.transform.call(ctx, code, id);
-        if (!res) continue;
-        logger.infoName("transform", { id, plugin: plugin.name });
-        if (typeof res == "object") code = res.code;
-        else code = res;
-        // implement source maps?
-      }
-      return { code };
-    },
     async load(id) {
       let _sorted = sortPluginsHook(plugins, "load");
       // Execute load hooks on plugins
@@ -100,13 +88,39 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
           resolve(null);
         });
       });
+    },
+    async transform(code, id) {
+      // Check if cached
+      let _sorted = sortPluginsHook(plugins, "transform");
+      for (plugin of _sorted) {
+        if (!plugin.transform) continue;
+        const res = await plugin.transform.call(ctx, code, id);
+        if (!res) continue;
+        logger.infoName("transform", { id, plugin: plugin.name });
+        if (typeof res == "object") code = res.code;
+        else code = res;
+        //addCached(id, res);
+        // implement source maps?
+      }
+      return { code };
+    },
+    async shouldTransformCachedModule(options) {
+      let _sorted = sortPluginsHook(plugins, "shouldTransformCachedModule");
+      for (plugin of _sorted) {
+        if (!plugin.shouldTransformCachedModule) continue;
+        const res: boolean | null = await plugin.shouldTransformCachedModule.call(ctx, options);
+        if (res == null) continue;
+        logger.infoName("shouldTransformCachedModule", { id: options.id, plugin: plugin.name });
+        return res;
+      }
+      return false;
     }
   };
 
   return container;
 }
 
-export const hooks = ["config", "configResolved", "resolveId", "load", "transform"];
+export const hooks = ["config", "configResolved", "resolveId", "load", "transform", "shouldTransformCachedModule"];
 
 export function sortPluginsHook(plugins: Plugin[], hook: Hook): SortedPlugin[] {
   let sorted: SortedPlugin[][] = [[], [], [], [], [], []];
@@ -133,4 +147,9 @@ function stripPlugin(plugin: Plugin): SortedPlugin {
   }
 
   return res;
+}
+
+interface ModuleInfo {
+  id: string;
+  code: string | null;
 }

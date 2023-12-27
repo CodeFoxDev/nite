@@ -21,7 +21,7 @@ export default function PluginESBuild(): Plugin {
       return resolve(importer, "../", source);
     },
 
-    // Transform to add (subpath) exports so it can be imported
+    // Transform to add (subpath) exports, which helps with tree-shaking
     transform(src, id) {
       const parsedId = parseId(id);
       if (parsedId.ext != "json") return;

@@ -16,6 +16,7 @@
     - Context
       - [ ] this.resolve
       - [ ] this.load
+      - [ ] this.parse
       - [ ] this.getFileName
       - [ ] this.getModuleInfo
       - [ ] this.addWatchFile
@@ -69,8 +70,11 @@
         Node.js v18.19.0
         ```
   
+# Features
+- Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
+
 - https://nodejs.org/api/module.html#customization-hooks
 - https://rollupjs.org/plugin-development
-- https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js#L315
+- https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js
 - https://vitejs.dev/guide/api-plugin.html#plugin-ordering
 - https://esbuild.github.io/api/#js-sync

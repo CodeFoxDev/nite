@@ -32,7 +32,7 @@ export function sortPlugins(plugins: Plugin[]): Plugin[] {
   return sorted.flat(2);
 }
 
-export type Hook = "config" | "configResolved" | "resolveId" | "load" | "transform";
+export type Hook = "config" | "configResolved" | "resolveId" | "load" | "shouldTransformCachedModule" | "transform";
 export type Format = "commonjs" | "module";
 
 export interface Plugin /*  extends rollup.Plugin */ {
@@ -54,6 +54,7 @@ export interface Plugin /*  extends rollup.Plugin */ {
   /** */
   resolveId?: PluginHook<ResolveIdHook>;
   load?: PluginHook<LoadHook>;
+  shouldTransformCachedModule?: PluginHook<ShouldTransformCachedModuleHook>;
   transform?: PluginHook<TransformHook>;
 }
 
@@ -76,6 +77,7 @@ export type SortedPlugin = {
   /** */
   resolveId?: ResolveIdHook;
   load?: LoadHook;
+  shouldTransformCachedModule?: ShouldTransformCachedModuleHook;
   transform?: TransformHook;
 };
 
@@ -94,13 +96,6 @@ export interface PluginContext {
     watchMode: boolean;
   };
 
-  /* parse(
-    code: string,
-    options?: {
-      allowReturnOutsideFunction?: boolean;
-    }
-  ); */
-
   // Methods
   /* resolve(id: string, importer?: string, options?: { skipSelf?: boolean; isEntry?: boolean }): rollup.ResolvedId;
   load(options: { id: string }): Promise<rollup.ModuleInfo>; */
@@ -115,6 +110,7 @@ export interface PluginContainer {
   // File hooks
   resolveId(id: string, importer: string | undefined, _skip?: Array<SortedPlugin>): Promise<rollup.ResolveIdResult>;
   load(id: string): Promise<rollup.LoadResult>;
+  shouldTransformCachedModule(options: { code: string; id: string }): Promise<boolean>;
   transform(code: string, id: string): Promise<rollup.TransformResult>;
 }
 
@@ -128,6 +124,7 @@ export type ResolveIdHook = (
   options: { isEntry: boolean }
 ) => PromiseOpt<string | null | void | false | { id: string; format?: Format }>;
 export type LoadHook = (this: PluginContext, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
+export type ShouldTransformCachedModuleHook = (options: { code: string; id: string }) => Promise<boolean | null | void>;
 export type TransformHook = (this: PluginContext, source: string, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
 
 export type SortedPlugins = SortedPlugin[];

@@ -1,4 +1,4 @@
-import { stdout } from "process";
+import { stdout } from "node:process";
 
 const showTimestamps = true;
 const showColors = true;
