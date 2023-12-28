@@ -78,6 +78,9 @@
 
         Node.js v18.19.0
         ```
+  - Dev 'server' with reloading on file change, or shortcut in terminal
+  - Devtools with load/transform stack overview (like vite-plugin-inspect)
+  - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
 - Cache
   - Bundle the library into single file (like vite)
   - Optimize code
@@ -85,7 +88,6 @@
   - Add config option to exclude/include libraries (optimizeDeps from vite)
   
 # Features
-- Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
 - Import aliases?
 
 - https://nodejs.org/api/module.html#customization-hooks
