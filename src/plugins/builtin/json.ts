@@ -17,6 +17,7 @@ export default function PluginESBuild(): Plugin {
     // Resolve json file so node doesn't give a warning that importing json is experimental
     resolveId(source, importer) {
       const parsed = parseId(source);
+      if (!parsed) console.log(source, parsed);
       if (parsed.ext != "json") return;
       return resolve(importer, "../", source);
     },

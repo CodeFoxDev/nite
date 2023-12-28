@@ -11,7 +11,10 @@
   "author": "Codefoxdev",
   "license": "MIT",
   "dependencies": {
+    "@rollup/pluginutils": "^5.1.0",
+    "es-module-lexer": "^1.4.1",
     "esbuild": "^0.19.10",
+    "mlly": "^1.4.2",
     "rollup": "^4.9.1"
   },
   "engines": {
@@ -23,7 +26,6 @@
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.5",
-    "@rollup/pluginutils": "^5.1.0",
     "@types/node": "^20.10.5",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"

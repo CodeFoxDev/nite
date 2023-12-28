@@ -8,6 +8,7 @@ export default defineConfig([
       "loader/index": "src/loader/index.ts",
       "loader/hooks": "src/loader/hooks.ts"
     },
+    external: ["node:module", "node:worker_threads", "node:fs", "node:path", "node:process", "esbuild", "@rollup/pluginutils"],
     output: {
       dir: "dist",
       format: "es",

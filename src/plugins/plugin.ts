@@ -120,8 +120,12 @@ export interface PluginContext {
   };
 
   // Methods
-  /* resolve(id: string, importer?: string, options?: { skipSelf?: boolean; isEntry?: boolean }): rollup.ResolvedId;
-  load(options: { id: string }): Promise<rollup.ModuleInfo>; */
+  resolve(
+    id: string,
+    importer?: string,
+    options?: { skipSelf?: boolean; isEntry?: boolean }
+  ): PromiseOpt<string | null | void | false | { id: string; format?: Format }>; //rollup.ResolvedId;
+  /* load(options: { id: string }): Promise<rollup.ModuleInfo>; */
 }
 
 // Hook methods

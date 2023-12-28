@@ -2,8 +2,11 @@
 
 // TODO: modify plugin to only include the useable methods
 import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from "./plugin";
-import { readFile } from "node:fs";
+import { existsSync, readFile } from "node:fs";
+import { resolve } from "node:path";
+import { cwd } from "node:process";
 import { PartialLogger } from "utils/logger";
+import { resolvePath as mllY_resolvePath, resolveImports as mlly_resolveImports, normalizeid } from "mlly";
 import * as cache from "cache";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
@@ -30,6 +33,10 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       async set(id, src) {
         return cache.set(id, src);
       }
+    },
+
+    resolve(id, importer, options) {
+      return container.resolveId(id, importer);
     },
 
     // TODO: Add env check for logging
@@ -59,8 +66,10 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       for (plugin of _sorted) plugin.configResolved.call(ctx, config);
     },
     async resolveId(id, importer, _skip) {
+      if (!id) return null;
       let resolved: string | null;
       let _sorted = sortPluginsHook(plugins, "resolveId");
+      // Execute resolveId hooks on plugins
       for (const p of _sorted) {
         if (!p.resolveId) continue;
         if (_skip) {
@@ -73,10 +82,21 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
         logger.infoName("resolvedId", { id, plugin: plugin.name });
         if (typeof res == "string") resolved = res;
         else resolved = res.id;
-        // Return on first non-null result
-        break;
+        return { id: resolved };
       }
-      return resolved ? { id: resolved } : null;
+      // Execute default resolve
+      let abs: string = null;
+      try {
+        abs = await mllY_resolvePath(id, { url: importer });
+      } catch {
+        return null;
+      }
+      let normalized = normalizeid(abs);
+      if (normalized.startsWith("file://")) normalized = normalized.replace("file://", "");
+      // TODO: Add support for import aliases
+      if (abs.startsWith("node:")) return { id: abs };
+      else if (existsSync(normalized)) return { id: normalized };
+      else return null;
     },
     async load(id) {
       let _sorted = sortPluginsHook(plugins, "load");
@@ -157,4 +177,12 @@ function stripPlugin(plugin: Plugin): SortedPlugin {
   }
 
   return res;
+}
+
+function wait(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(true);
+    }, ms);
+  });
 }

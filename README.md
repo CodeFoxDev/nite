@@ -63,6 +63,7 @@
 - DX
   - Proper error handling
     - Nodejs operations with errorcodes
+    - Change nodejs errors to have proper file lines, instead of the build one (only in build mode)
     - Nite errors with proper error messages
       - Code 'chunks' where the error occured (similar to esbuild and wmr)
         Generate code chunks from e.g. this:
@@ -85,6 +86,7 @@
   
 # Features
 - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
+- Import aliases?
 
 - https://nodejs.org/api/module.html#customization-hooks
 - https://rollupjs.org/plugin-development

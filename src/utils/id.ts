@@ -45,6 +45,7 @@ interface ParsedId {
 }
 
 export function parseId(id: string): ParsedId {
+  if (!id) return null;
   const s = id.split(".");
   // TODO: Also remove queries `time.css?inline`
   const ext = s[s.length - 1];
