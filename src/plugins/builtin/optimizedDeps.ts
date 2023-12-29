@@ -1,9 +1,21 @@
 import type { ResolvedConfig } from "../../config";
 import type { Plugin } from "../plugin";
-import { parse } from "es-module-lexer";
+import { build } from "esbuild";
+import { ImportSpecifier, parse } from "es-module-lexer";
+import { normalizeid, resolvePathSync } from "mlly";
+import { resolve } from "path";
+import { Logger } from "utils/logger";
+
+const logger = new Logger(["plugins", "optimizedDeps"]);
+
+interface bundled {
+  name: string;
+  bundled: string;
+}
 
 export default function PluginOptimizedDeps(): Plugin {
   let config: ResolvedConfig = {};
+  let libs: bundled[] = [];
 
   return {
     name: "nite:optimizedDeps",
@@ -14,12 +26,8 @@ export default function PluginOptimizedDeps(): Plugin {
     },
 
     async transform(src, id) {
-      let m: RegExpExecArray;
-      let c = 0;
-      let moduleTree = {
-        id,
-        imports: []
-      };
+      if (id.includes("node_modules")) return;
+      let res: string = src;
 
       const [imports, exports, facade] = await parse(src, id);
       for (const i of imports) {
@@ -32,13 +40,57 @@ export default function PluginOptimizedDeps(): Plugin {
           if (lib.startsWith(`'`) || lib.startsWith(`"`)) lib = lib.replaceAll(`'`, "").replaceAll(`"`, "");
           else continue;
         }
-        const resolvedId = await this.resolve(lib, id);
-        moduleTree.imports.push({
-          imported: lib,
-          resolved: typeof resolvedId != "object" ? resolvedId : resolvedId?.id,
-          dynamic: isDynamic
-        });
+        if (lib.startsWith("/") || lib.startsWith(".") || lib.startsWith("#") || lib.startsWith("file://")) continue;
+        const normal = normalizeid(resolvePathSync(lib, { url: id }));
+        if (normal.startsWith("node:")) continue;
+        // Bundle dep if not already
+        if (!libs.find((e) => e.name == lib)) {
+          const res = preBundleLib(lib, normal.replace("file://", ""));
+          if (!res) continue;
+          libs.push({
+            name: lib,
+            bundled: normal
+          });
+        }
+        // TODO: Check if not already prebundled
+        res = resolveBundledImport(src, i, normal);
       }
+      //if (!id.includes("node_modules")) console.log(libs);
+      return {
+        code: res
+      };
     }
   };
+}
+
+async function preBundleLib(name: string, entry: string) {
+  try {
+    const b = await build({
+      entryPoints: [entry],
+      outfile: resolve(process.cwd(), "node_modules/.nite/temp", `dep-${name}.js`),
+      bundle: true,
+      minify: true,
+      platform: "node",
+      format: "esm",
+      target: "node14",
+      external: ["lightningcss"]
+    });
+    logger.info(`Succesfully prebundled ${name}`);
+    return b;
+  } catch (err) {
+    logger.error(`Failed to prebundle ${name}, esbuild error:`);
+    console.log(err);
+    return false;
+  }
+}
+
+function resolveBundledImport(src: string, i: ImportSpecifier, bundled: string): string {
+  let res = src;
+  const org = src.slice(i.ss, i.se);
+  const c = org.substring(i.s - i.ss - 1, i.s - i.ss);
+  let newImport = org.substring(0, i.s - i.ss) + `${bundled}${c}`;
+  if (i.d > -1) newImport = org.replace(src.slice(i.s, i.e), `'${bundled}'`);
+  res = src.replace(org, newImport);
+  //res = res.substring(0, i.se)
+  return res;
 }
