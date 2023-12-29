@@ -15,6 +15,7 @@ export default function PluginESBuild(): Plugin {
     },
 
     async transform(src, id) {
+      if (id.includes("node_modules")) return;
       const cached = await this.cache.get(id);
       if (cached) return cached;
       const parsed = parseId(id);

@@ -6,19 +6,22 @@
     - hooks
       > Rollup hooks
       - [ ] options
+      - [ ] buildStart
       - [x] resolveId
       - [x] load
         - Default load: add support for queries in id
       - [x] transform
-      - [ ] moduleParsed
+      - [ ] moduleParsed (not during dev)
       - [ ] shouldTransformCachedModule
       - [ ] watchChange
+      - [ ] buildEnd
+      - [ ] closeBundle
       > Custom hooks
       - [x] config
       - [x] configResolved
     - Context
       > Rollup context
-      - [ ] this.resolve
+      - [x] this.resolve
       - [ ] this.load
       - [ ] this.parse
       - [ ] this.getFileName
@@ -33,7 +36,7 @@
       - [ ] this.cache
         - [ ] this.cache.get
         - [ ] this.cache.set
-    - ordering
+    - [x] ordering
     - loading
       - Allow rollup-only plugins to load with `apply="buid"` and `enfore="post"`
         ```js
@@ -82,10 +85,13 @@
   - Devtools with load/transform stack overview (like vite-plugin-inspect)
   - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
 - Cache
-  - Bundle the library into single file (like vite)
+  - [x] Bundle the library into single file (like vite)
   - Optimize code
   - Change file names to reflect the library
   - Add config option to exclude/include libraries (optimizeDeps from vite)
+- Env
+  - Load .env files same way that vite does it
+  - Add env to import.meta.env (also add vite's custom env variables)
   
 # Features
 - Import aliases?
