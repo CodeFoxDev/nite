@@ -26,6 +26,7 @@ export default function PluginOptimizedDeps(): Plugin {
     },
 
     async transform(src, id) {
+      return; // Temporarily disabled
       if (id.includes("node_modules")) return;
       let res: string = src;
 

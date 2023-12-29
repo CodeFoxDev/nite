@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "@rollup/pluginutils": "^5.1.0",
+    "chokidar": "^3.5.3",
     "es-module-lexer": "^1.4.1",
     "esbuild": "^0.19.10",
     "mlly": "^1.4.2",

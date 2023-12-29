@@ -6,6 +6,7 @@ import { Logger } from "utils/logger";
 import type { BuildOptions as ESBuildOptions } from "esbuild";
 import type { RollupOptions } from "rollup";
 import type { Plugin } from "./plugins/plugin";
+import type { WatchOptions } from "chokidar";
 import { load } from "loader/hooks";
 
 // Valid names for the config file
@@ -66,6 +67,8 @@ export interface UserConfig {
   };
   plugins?: Array<Plugin>;
   esbuild?: ESBuildOptions;
+
+  watch?: WatchOptions;
 }
 
 export type ResolvedConfig = Readonly<UserConfig>;
