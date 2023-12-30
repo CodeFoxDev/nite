@@ -1,5 +1,5 @@
 import type { ModuleFormat } from "node:module";
-import type { LoadResult, TransformResult as _TransformResult } from "rollup";
+import type { LoadResult as _LoadResult, TransformResult as _TransformResult } from "rollup";
 
 export class ModuleNode {
   /**
@@ -9,8 +9,9 @@ export class ModuleNode {
    */
   id: string | null;
   /**
-   * The location of the file in the filesystem, this includes the prefix `file:///` because nodejs needs it,
-   * it can also be `null` if it's a builtin nodejs module
+   * The normalized location of the file in the filesystem,
+   * the id of a virtual module prefixed with `\0`,
+   * or the if of a builtin nodejs module
    */
   file: string;
   /**
@@ -19,6 +20,7 @@ export class ModuleNode {
    * and `wasm` isn't supported at the moment
    */
   format: ModuleFormat;
+  virtual = false;
 
   /**
    * All the modules that import this node
@@ -32,7 +34,7 @@ export class ModuleNode {
   // Plugin hook results
   resolveIdResult: ResolveIdResult;
   loadResult: LoadResult;
-  transformResult: TransformResult;
+  transformResult = new Set<TransformStackNode>();
 
   /**
    * @param fileOrId The absolute file url starting with the prefix `file:///` or nodejs builtin module starting with the prefix `node:`
@@ -41,14 +43,17 @@ export class ModuleNode {
     if (!fileOrId) return;
     // check if it is absolute
     if (fileOrId.startsWith("node:")) {
-      this.id = fileOrId;
+      this.id = this.file = fileOrId;
       this.format = "builtin";
+    } else if (fileOrId.startsWith("\0") || fileOrId.startsWith("virtual:")) {
+      this.id = this.file = fileOrId;
+      this.virtual = true;
     } else this.file = fileOrId;
   }
 }
 
 type ResolveIdResult = { plugin: string };
-
+type LoadResult = { code: string; plugin: string };
 type TransformStackNode = { code: string; plugin: string };
 type TransformResult = TransformStackNode[];
 

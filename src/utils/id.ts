@@ -1,3 +1,6 @@
+import { normalizeid } from "mlly";
+import { join } from "path";
+
 export class FileUrl {
   id: string;
   extension: string;
@@ -73,4 +76,30 @@ export function parseId(id: string): ParsedId {
 export function normalizePath(path: string): string {
   if (path.includes("\\")) path = path.replaceAll("\\", "/");
   return path;
+}
+
+export function isVirtual(id: string): boolean {
+  return id.startsWith("\0") || id.startsWith("virtual:");
+}
+
+export function normalizeId(id: string): string {
+  if (isVirtual(id)) return id;
+  let n = normalizeid(id);
+  if (n.startsWith("file:///")) n = n.replace("file:///", "");
+  else if (n.startsWith("file://")) n = n.replace("file://", "");
+  if (id.includes("__virtual")) {
+    const s = id.split("__");
+    let res = "";
+    if (s[1] == "true") res = "\0";
+    res += s[2].replace("/", ":");
+    return res;
+  }
+  return n;
+}
+
+export function normalizeNodeHook(id: string): string {
+  if (isVirtual(id)) return normalizePath(`file:///${join(process.cwd(), `__${id.startsWith("\0")}__${id.replace(":", "/").replace("\0", "")}`)}`);
+  const n = normalizeid(id);
+  if (!n.startsWith("file://")) return n;
+  return n.replace("file://", "file:///");
 }

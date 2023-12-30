@@ -6,6 +6,7 @@ import type { ModuleFormat } from "node:module";
 import { existsSync, readFile } from "node:fs";
 import { ModuleGraph, ModuleNode } from "./moduleGraph";
 import { PartialLogger } from "utils/logger";
+import { normalizeId } from "utils/id";
 import { resolvePath as mllY_resolvePath, resolveImports as mlly_resolveImports, normalizeid } from "mlly";
 import * as cache from "cache";
 
@@ -17,7 +18,6 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
 
   let plugin: SortedPlugin | null = null;
   const _pluginLogger = new PartialLogger(["plugins"]);
-
   const moduleGraph = new ModuleGraph();
 
   // The value of the `this` property in a plugin hook
@@ -68,6 +68,8 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
     async resolveId(id, importer, _skip) {
       if (!id) return null;
       let resolved: string | null;
+      // The name that gets added to the modulegraph
+      let _plugin: string;
       let _sorted = sortPluginsHook(plugins, "resolveId");
       // Execute resolveId hooks on plugins
       for (const p of _sorted) {
@@ -79,31 +81,16 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
 
         let res = await plugin.resolveId.call(ctx, id, importer);
         if (!res) continue;
-        logger.infoName("resolvedId", { id, plugin: plugin.name });
-        if (typeof res == "string") resolved = res;
-        else resolved = res.id;
+        resolved = typeof res == "object" ? res.id : res;
+        _plugin = plugin.name;
         break;
-      }
-      // Execute default resolve
-      if (!resolved) {
-        let abs: string = null;
-        try {
-          abs = await mllY_resolvePath(id, { url: importer });
-          let normalized = normalizeid(abs);
-          if (normalized.startsWith("file://")) normalized = normalized.replace("file://", "");
-          // TODO: Add support for import aliases
-          if (abs.startsWith("node:")) resolved = abs;
-          else if (existsSync(normalized)) resolved = normalized;
-          else resolved = null;
-        } catch {
-          resolved = null;
-        }
       }
 
       if (!resolved) return null;
-      const mod = moduleGraph.ensureEntryFromFile(normalizeid(resolved));
+      const mod = moduleGraph.ensureEntryFromFile(normalizeId(resolved));
+      mod.resolveIdResult = { plugin: _plugin };
       if (importer) {
-        const importerMod = moduleGraph.ensureEntryFromFile(normalizeid(importer));
+        const importerMod = moduleGraph.ensureEntryFromFile(normalizeId(importer));
         mod.importers.add(importerMod);
         importerMod.imported.add(mod);
       }
@@ -111,38 +98,37 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       return resolved;
     },
     async load(id) {
+      if (!id) return;
+      let code: string;
+      // The name that gets added to the modulegraph
+      let _plugin: string;
       let _sorted = sortPluginsHook(plugins, "load");
       // Execute load hooks on plugins
       for (plugin of _sorted) {
         if (!plugin.load) continue;
         const res = await plugin.load.call(ctx, id);
         if (!res) continue;
-        logger.infoName("load", { id, plugin: plugin.name });
-        return res;
+        code = res;
+        _plugin = plugin.name;
+        break;
       }
-      // Execute default load
-      // TODO: Move this to `default` plugin with `enforce="post"`
-      return new Promise((resolve) => {
-        readFile(id, (err, data) => {
-          if (!err) return resolve(data.toString());
-          // TODO: Implement proper error handling
-          // also don't error if it's a module (e.g. node:fs, rollup, etc.)
-          //logger.errorName("load", "Failed to load file using default hook");
-          resolve(null);
-        });
-      });
+
+      if (!code) return null;
+      const mod = moduleGraph.getModulesByFile(id);
+      mod.loadResult = { plugin: _plugin, code };
+
+      return { code };
     },
     async transform(code, id) {
-      // Check if cached
+      const mod = moduleGraph.getModulesByFile(id);
       let _sorted = sortPluginsHook(plugins, "transform");
+
       for (plugin of _sorted) {
         if (!plugin.transform) continue;
         const res = await plugin.transform.call(ctx, code, id);
         if (!res) continue;
-        logger.infoName("transform", { id, plugin: plugin.name });
-        if (typeof res == "object") code = res.code;
-        else code = res;
-        //addCached(id, res);
+        code = typeof res == "object" ? res.code : res;
+        mod.transformResult.add({ code, plugin: plugin.name });
         // implement source maps?
       }
       return { code };
@@ -190,12 +176,4 @@ function stripPlugin(plugin: Plugin): SortedPlugin {
   }
 
   return res;
-}
-
-function wait(ms) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(true);
-    }, ms);
-  });
 }
