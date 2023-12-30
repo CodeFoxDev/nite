@@ -1,5 +1,5 @@
 import type { ResolvedConfig } from "../config";
-import type { Plugin } from "../modules/plugin";
+import type { Plugin } from "../modules";
 import { build } from "esbuild";
 import { ImportSpecifier, parse } from "es-module-lexer";
 import { normalizeid, resolvePathSync } from "mlly";

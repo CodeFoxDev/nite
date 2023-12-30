@@ -1,4 +1,4 @@
-import type { Plugin } from "modules/plugin";
+import type { Plugin } from "modules";
 import { existsSync, readFileSync } from "fs";
 import { resolvePath } from "mlly";
 import { normalizeId } from "utils/id";

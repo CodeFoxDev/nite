@@ -2,10 +2,9 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
 import { config } from "config";
-import { PluginContainer, initializePlugins } from "modules/plugin";
-import { Logger, PartialLogger } from "utils/logger";
+import { PluginContainer, initializePlugins } from "modules";
+import { PartialLogger } from "utils/logger";
 import { FileUrl, normalizeId, normalizeNodeHook } from "utils/id";
-import { packageJSON } from "utils/package";
 import { detectSyntax } from "mlly";
 
 type nextResolve = (specifier: string, context?: ResolveHookContext) => ResolveFnOutput | Promise<ResolveFnOutput>;
@@ -78,12 +77,4 @@ function determineFormat(url: string, context: LoadHookContext, src: string): Mo
   if (!syntax.isMixed && syntax.hasESM) return "module";
   else if (!syntax.isMixed && syntax.hasCJS) return "commonjs";
   else return "module";
-}
-
-function wait(ms) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(true);
-    }, ms);
-  });
 }

@@ -1,5 +1,5 @@
 import type { ResolvedConfig } from "../config";
-import type { Plugin } from "../modules/plugin";
+import type { Plugin } from "../modules";
 import { resolve } from "node:path";
 import { parseId } from "utils/id";
 import { dataToEsm } from "@rollup/pluginutils";

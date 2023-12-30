@@ -1,7 +1,7 @@
 // https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js
 
 // TODO: modify plugin to only include the useable methods
-import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from "./plugin";
+import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from ".";
 import type { ModuleFormat } from "node:module";
 import { existsSync, readFile } from "node:fs";
 import { ModuleGraph, ModuleNode } from "./moduleGraph";

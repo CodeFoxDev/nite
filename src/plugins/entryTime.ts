@@ -1,4 +1,4 @@
-import type { Plugin } from "modules/plugin";
+import type { Plugin } from "modules";
 
 export default function PluginEntryTime(): Plugin {
   const vmodId = "virtual:nite-entry";

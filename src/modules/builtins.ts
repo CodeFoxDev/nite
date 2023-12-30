@@ -3,7 +3,7 @@ import PluginJSON from "../plugins/json";
 import PluginOptimizedDeps from "../plugins/optimizedDeps";
 import PluginEntryTime from "../plugins/entryTime";
 import PluginDefault from "plugins/default";
-import type { Plugin } from "./plugin";
+import type { Plugin } from ".";
 // TODO: Move this to config initialization
 export function getBuiltinPlugins(): Plugin[] {
   return [PluginOptimizedDeps(), PluginJSON(), PluginESBuild(), PluginEntryTime(), PluginDefault()];
