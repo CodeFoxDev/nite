@@ -2,9 +2,9 @@
 
 // TODO: modify plugin to only include the useable methods
 import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from "./plugin";
+import type { ModuleFormat } from "node:module";
 import { existsSync, readFile } from "node:fs";
-import { resolve } from "node:path";
-import { cwd } from "node:process";
+import { ModuleGraph, ModuleNode } from "./moduleGraph";
 import { PartialLogger } from "utils/logger";
 import { resolvePath as mllY_resolvePath, resolveImports as mlly_resolveImports, normalizeid } from "mlly";
 import * as cache from "cache";
@@ -18,8 +18,9 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
   let plugin: SortedPlugin | null = null;
   const _pluginLogger = new PartialLogger(["plugins"]);
 
+  const moduleGraph = new ModuleGraph();
+
   // The value of the `this` property in a plugin hook
-  // TODO: Make ctx immutable when passed in the hooks? or just create copy?
   const ctx: PluginContext = {
     meta: {
       rollupVersion: "4.9.1", // TODO: read this from package.json?
@@ -48,7 +49,6 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
   const container: PluginContainer = {
     ctx,
 
-    // Hooks
     config(config, env) {
       let _sorted = sortPluginsHook(plugins, "config");
       for (plugin of _sorted) {
@@ -77,26 +77,38 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
         }
         plugin = p;
 
-        let res = await p.resolveId.call(ctx, id, importer);
+        let res = await plugin.resolveId.call(ctx, id, importer);
         if (!res) continue;
         logger.infoName("resolvedId", { id, plugin: plugin.name });
         if (typeof res == "string") resolved = res;
         else resolved = res.id;
-        return { id: resolved };
+        break;
       }
       // Execute default resolve
-      let abs: string = null;
-      try {
-        abs = await mllY_resolvePath(id, { url: importer });
-      } catch {
-        return null;
+      if (!resolved) {
+        let abs: string = null;
+        try {
+          abs = await mllY_resolvePath(id, { url: importer });
+          let normalized = normalizeid(abs);
+          if (normalized.startsWith("file://")) normalized = normalized.replace("file://", "");
+          // TODO: Add support for import aliases
+          if (abs.startsWith("node:")) resolved = abs;
+          else if (existsSync(normalized)) resolved = normalized;
+          else resolved = null;
+        } catch {
+          resolved = null;
+        }
       }
-      let normalized = normalizeid(abs);
-      if (normalized.startsWith("file://")) normalized = normalized.replace("file://", "");
-      // TODO: Add support for import aliases
-      if (abs.startsWith("node:")) return { id: abs };
-      else if (existsSync(normalized)) return { id: normalized };
-      else return null;
+
+      if (!resolved) return null;
+      const mod = moduleGraph.ensureEntryFromFile(normalizeid(resolved));
+      if (importer) {
+        const importerMod = moduleGraph.ensureEntryFromFile(normalizeid(importer));
+        mod.importers.add(importerMod);
+        importerMod.imported.add(mod);
+      }
+
+      return resolved;
     },
     async load(id) {
       let _sorted = sortPluginsHook(plugins, "load");
@@ -109,6 +121,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
         return res;
       }
       // Execute default load
+      // TODO: Move this to `default` plugin with `enforce="post"`
       return new Promise((resolve) => {
         readFile(id, (err, data) => {
           if (!err) return resolve(data.toString());

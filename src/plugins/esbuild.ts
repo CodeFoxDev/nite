@@ -1,6 +1,6 @@
 import { transform } from "esbuild";
-import type { ResolvedConfig } from "../../config";
-import type { Plugin } from "../plugin";
+import type { ResolvedConfig } from "../config";
+import type { Plugin } from "../modules/plugin";
 import { readFileSync } from "node:fs";
 import { parseId } from "utils/id";
 

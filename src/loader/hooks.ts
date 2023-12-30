@@ -2,7 +2,7 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
 import { config } from "config";
-import { PluginContainer, initializePlugins } from "plugins/plugin";
+import { PluginContainer, initializePlugins } from "modules/plugin";
 import { Logger, PartialLogger } from "utils/logger";
 import { FileUrl, normalizePath } from "utils/id";
 import { packageJSON } from "utils/package";

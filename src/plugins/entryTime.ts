@@ -1,4 +1,4 @@
-import type { Plugin } from "plugins/plugin";
+import type { Plugin } from "modules/plugin";
 
 export default function PluginEntryTime(): Plugin {
   let finished = false;

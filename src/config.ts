@@ -5,7 +5,7 @@ import { Logger } from "utils/logger";
 
 import type { BuildOptions as ESBuildOptions } from "esbuild";
 import type { RollupOptions } from "rollup";
-import type { Plugin } from "./plugins/plugin";
+import type { Plugin } from "./modules/plugin";
 import type { WatchOptions } from "chokidar";
 import { load } from "loader/hooks";
 

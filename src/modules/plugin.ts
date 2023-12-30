@@ -3,7 +3,7 @@ import type { ResolvedConfig, UserConfig } from "config";
 import type { CachedModule } from "cache/cache";
 import { Logger } from "utils/logger";
 import { getBuiltinPlugins } from "./builtins";
-import { createPluginContainer } from "./container";
+import { createPluginContainer } from "./pluginContainer";
 
 const logger = new Logger(["plugins", "container"]);
 
