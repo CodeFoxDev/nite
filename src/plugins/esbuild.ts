@@ -4,15 +4,9 @@ import type { Plugin } from "../modules";
 import { readFileSync } from "node:fs";
 import { parseId } from "utils/id";
 
-export default function PluginESBuild(): Plugin {
-  let config: ResolvedConfig = {};
-
+export default function PluginESBuild(config: ResolvedConfig): Plugin {
   return {
     name: "nite:esbuild",
-
-    configResolved(_config) {
-      config = _config;
-    },
 
     async transform(src, id) {
       if (id.includes("node_modules")) return;

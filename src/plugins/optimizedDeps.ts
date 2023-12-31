@@ -13,17 +13,12 @@ interface bundled {
   bundled: string;
 }
 
-export default function PluginOptimizedDeps(): Plugin {
-  let config: ResolvedConfig;
+export default function PluginOptimizedDeps(config: ResolvedConfig): Plugin {
   let libs: bundled[] = [];
 
   return {
     name: "nite:optimizedDeps",
     enforce: "pre",
-
-    configResolved(_config) {
-      config = _config;
-    },
 
     async transform(src, id) {
       return; // Temporarily disabled

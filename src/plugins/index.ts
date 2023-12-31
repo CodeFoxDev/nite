@@ -6,24 +6,64 @@ import PluginJSON from "./json";
 import PluginESBuild from "./esbuild";
 import PluginEntryTime from "./entryTime";
 import PluginDefault from "./default";
+import { ResolvedConfig } from "config";
 
-export const builtins = [PluginOptimizedDeps(), PluginJSON(), PluginESBuild(), PluginEntryTime(), PluginDefault()];
+export async function resolvePlugins(
+  config: ResolvedConfig,
+  prePlugins: Plugin[],
+  normalPlugins: Plugin[],
+  postPlugins: Plugin[]
+): Promise<Plugin[]> {
+  const isBuild = config.command == "build";
+
+  return [
+    PluginOptimizedDeps(config),
+    // Alias plugin
+    ...prePlugins,
+    PluginESBuild(config),
+    PluginJSON(config),
+    ...normalPlugins,
+    ...postPlugins,
+    PluginEntryTime(),
+    PluginDefault()
+  ];
+}
+
+export function sortUserPlugins(plugins: Plugin[] | undefined): [Plugin[], Plugin[], Plugin[]] {
+  const prePlugins: Plugin[] = [];
+  const normalPlugins: Plugin[] = [];
+  const postPlugins: Plugin[] = [];
+
+  if (plugins) {
+    for (const p of plugins.flat()) {
+      if (p.enforce == "pre") prePlugins.push(p);
+      else if (p.enforce == "post") postPlugins.push(p);
+      else normalPlugins.push(p);
+    }
+  }
+
+  return [prePlugins, normalPlugins, postPlugins];
+}
 
 /**
  * @param plugins Needs to follow `method.order` from rollup instead of `method.enforce`
  */
 export function getSortedPluginsByHook<K extends keyof Plugin>(hookName: K, plugins: readonly Plugin[]) {
-  let sorted = [[], [], [], [], [], []];
+  const pre: Plugin[] = [];
+  const normal: Plugin[] = [];
+  const post: Plugin[] = [];
 
   for (const plugin of plugins) {
-    const builtin = plugin.name.startsWith("nite:") ? 1 : 0;
-    const hookMethod = plugin[hookName];
-    if (!hookMethod) continue;
-    let order = 2;
-    if (typeof hookMethod == "object") order = hookMethod.order == "pre" ? 0 : hookMethod.order == "post" ? 4 : 2;
-    sorted[order + builtin].push(stripPlugin(plugin));
+    const hook = plugin[hookName];
+    if (!hook) continue;
+    if (typeof hook == "object") {
+      if (hook.order == "pre") pre.push(stripPlugin(plugin));
+      else if (hook.order == "post") post.push(stripPlugin(plugin));
+      continue;
+    }
+    normal.push(stripPlugin(plugin));
   }
-  return sorted.flat() as PluginWithRequiredHook<K>[];
+  return [...pre, ...normal, ...post] as PluginWithRequiredHook<K>[];
 }
 
 function stripPlugin(plugin: Plugin): SortedPlugin {

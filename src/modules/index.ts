@@ -44,7 +44,7 @@ export interface Plugin /*  extends rollup.Plugin */ {
   name: string;
   version?: string;
   enforce?: "pre" | "post";
-  apply?: "dev" | "build"; // Also allow function? (like vite)
+  apply?: "dev" | "build" | ((v: any) => boolean); // Also allow function? (like vite)
   debug?: boolean;
 
   /**
@@ -115,7 +115,11 @@ export interface PluginContext {
 
 // Hook methods
 
-export type ConfigHook = (this: void, config: InlineConfig, env: { mode: string; command: string }) => InlineConfig | null | void;
+export type ConfigHook = (
+  this: void,
+  config: InlineConfig,
+  env: { mode: string; command: string }
+) => InlineConfig | null | void;
 export type ConfigResolvedHook = (this: void, config: ResolvedConfig) => void;
 
 export type ResolveIdHook = (
@@ -124,9 +128,16 @@ export type ResolveIdHook = (
   importer: string | undefined,
   options: { isEntry: boolean }
 ) => PromiseOpt<string | null | void | false | { id: string; format?: Format }>;
-export type LoadHook = (this: PluginContext, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
+export type LoadHook = (
+  this: PluginContext,
+  id: string
+) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
 export type ShouldTransformCachedModuleHook = (options: { code: string; id: string }) => Promise<boolean | null | void>;
-export type TransformHook = (this: PluginContext, source: string, id: string) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
+export type TransformHook = (
+  this: PluginContext,
+  source: string,
+  id: string
+) => PromiseOpt<string | null | void | { code: string; format?: Format }>;
 
 // Helpers
 

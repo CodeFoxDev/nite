@@ -4,15 +4,9 @@ import { resolve } from "node:path";
 import { parseId } from "utils/id";
 import { dataToEsm } from "@rollup/pluginutils";
 
-export default function PluginESBuild(): Plugin {
-  let config: ResolvedConfig = {};
-
+export default function PluginESBuild(config: ResolvedConfig): Plugin {
   return {
     name: "nite:json",
-
-    configResolved(_config) {
-      config = _config;
-    },
 
     // Resolve json file so node doesn't give a warning that importing json is experimental
     resolveId(source, importer) {
@@ -27,6 +21,12 @@ export default function PluginESBuild(): Plugin {
       const parsedId = parseId(id);
       if (parsedId.ext != "json") return;
       try {
+        if (config.json.stringify) {
+          return {
+            code: `export default JSON.parse(${JSON.stringify(src)})`
+          };
+        }
+
         const parsed = JSON.parse(src);
         return {
           code: dataToEsm(parsed, {

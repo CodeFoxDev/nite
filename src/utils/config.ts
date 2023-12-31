@@ -33,3 +33,11 @@ function mergeConfigRecursive(defaults: Record<string, any>, overrides: Record<s
   }
   return merged;
 }
+
+export async function asyncFlatten<T>(arr: T[]): Promise<T[]> {
+  // Flattens the array of possible promises until there are no promises left
+  do {
+    arr = (await Promise.all(arr)).flat(Infinity) as any;
+  } while (arr.some((v: any) => v?.then));
+  return arr;
+}

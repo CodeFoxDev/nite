@@ -6,9 +6,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { cwd } from "node:process";
 import { Logger } from "utils/logger";
-import { mergeConfig } from "utils/config";
+import { mergeConfig, asyncFlatten } from "utils/config";
 import { normalizeNodeHook } from "utils/id";
-import { builtins } from "./plugins";
+import { resolvePlugins, sortUserPlugins } from "./plugins";
 
 // Valid names for the config file
 const defaultConfigFiles = ["nite.config.js", "nite.config.mjs"];
@@ -117,7 +117,8 @@ export type ResolvedConfig = Readonly<
     inlineConfig: InlineConfig;
     root: string;
     cacheDir: string;
-    mode: string;
+    command: "build" | "serve";
+    mode: "development" | "build";
     plugins: readonly Plugin[];
     json: ResolvedJsonOptions;
     esbuild: ESBuildOptions;
@@ -127,7 +128,7 @@ export type ResolvedConfig = Readonly<
   }
 >;
 
-export async function resolveConfig(inlineConfig: InlineConfig): Promise<ResolvedConfig> {
+export async function resolveConfig(inlineConfig: InlineConfig, command: "build" | "serve"): Promise<ResolvedConfig> {
   let config: InlineConfig = inlineConfig;
   let mode = config.mode ?? "development";
   if (!!process.env.NODE_ENV) process.env.NODE_ENV = mode;
@@ -141,6 +142,15 @@ export async function resolveConfig(inlineConfig: InlineConfig): Promise<Resolve
 
   mode = inlineConfig.mode || config.mode || mode;
   console.log(config);
+
+  const rawUserPlugins = ((await asyncFlatten(config.plugins || [])) as Plugin[]).filter((p: Plugin) => {
+    if (!p) return false;
+    else if (!p.apply) return true;
+    else if (typeof p.apply == "function") return p.apply({ ...config, mode });
+    else return p.apply === command;
+  });
+
+  const [prePlugins, normalPlugins, postPlugins] = sortUserPlugins(rawUserPlugins);
 
   return;
 }
