@@ -1,9 +1,9 @@
 import type { ResolvedConfig } from "../config";
 import type { Plugin } from "../modules";
+import { resolve } from "node:path";
 import { build } from "esbuild";
 import { ImportSpecifier, parse } from "es-module-lexer";
 import { normalizeid, resolvePathSync } from "mlly";
-import { resolve } from "path";
 import { Logger } from "utils/logger";
 
 const logger = new Logger(["plugins", "optimizedDeps"]);
@@ -14,7 +14,7 @@ interface bundled {
 }
 
 export default function PluginOptimizedDeps(): Plugin {
-  let config: ResolvedConfig = {};
+  let config: ResolvedConfig;
   let libs: bundled[] = [];
 
   return {

@@ -1,7 +1,7 @@
 // Runs off of main thread
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
-import { config } from "config";
+import { resolveConfig } from "config";
 import { PluginContainer, initializePlugins } from "modules";
 import { PartialLogger } from "utils/logger";
 import { FileUrl, normalizeId, normalizeNodeHook } from "utils/id";
@@ -13,13 +13,15 @@ type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promi
 const logger = new PartialLogger(["loader"]);
 let container: PluginContainer | null;
 
+resolveConfig({});
+
 export async function initialize({ number, port }: { number: number; port: MessagePort }) {
-  const _config = await config();
-  if (_config == false) {
+  //const _config = await config();
+  /* if (_config == false) {
     port.postMessage("Error when loading config, quitting...");
     return;
-  }
-  container = initializePlugins(_config);
+  } */
+  //container = initializePlugins(_config);
 }
 
 export async function resolve(specifier: string, context: ResolveHookContext, nextResolve: nextResolve): Promise<ResolveFnOutput> {

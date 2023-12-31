@@ -1,5 +1,6 @@
 import type * as rollup from "rollup";
-import type { ResolvedConfig, UserConfig } from "config";
+import type { ObjectHook } from "rollup";
+import type { ResolvedConfig, InlineConfig } from "config";
 import type { CachedModule } from "cache/cache";
 import { Logger } from "utils/logger";
 import { getBuiltinPlugins } from "./builtins";
@@ -7,18 +8,19 @@ import { createPluginContainer } from "./pluginContainer";
 
 const logger = new Logger(["plugins", "container"]);
 
-export function initializePlugins(config: UserConfig) {
+export function initializePlugins(config: InlineConfig) {
+  return;
   const plugins = loadPlugins(config);
-  const _sorted = sortPlugins(plugins);
-  const container = createPluginContainer(_sorted, config);
-  logger.info("Created plugin container succesfully");
-  return container;
+  //const _sorted = sortPlugins(plugins);
+  //const container = createPluginContainer(_sorted, config);
+  //logger.info("Created plugin container succesfully");
+  //return container;
 }
 
-export function loadPlugins(config: UserConfig): Plugin[] {
+export function loadPlugins(config: InlineConfig) {
   const configPlugins = config.plugins ?? [];
   const builtinPlugins = getBuiltinPlugins();
-  return [...configPlugins, ...builtinPlugins];
+  //return [...configPlugins, ...builtinPlugins];
 }
 
 export function sortPlugins(plugins: Plugin[]): Plugin[] {
@@ -49,38 +51,22 @@ export interface Plugin /*  extends rollup.Plugin */ {
    * Hook to modify the config, return an object to merge config,
    * or change the config parameter directly to mutate.
    */
-  config?: PluginHook<ConfigHook>;
+  config?: ObjectHook<ConfigHook>;
   /**
    * The final resolved config
    */
-  configResolved?: PluginHook<ConfigResolvedHook>;
+  configResolved?: ObjectHook<ConfigResolvedHook>;
   /** */
-  resolveId?: PluginHook<ResolveIdHook>;
-  load?: PluginHook<LoadHook>;
-  shouldTransformCachedModule?: PluginHook<ShouldTransformCachedModuleHook>;
-  transform?: PluginHook<TransformHook>;
+  resolveId?: ObjectHook<ResolveIdHook>;
+  load?: ObjectHook<LoadHook>;
+  transform?: ObjectHook<TransformHook>;
 }
 
-export type SortedPlugin = {
-  name: string;
-  version?: string;
-  enforce?: "pre" | "post";
-  apply?: "dev" | "build"; // Also allow function? (like vite)
-  debug?: boolean;
-
-  /**
-   * Hook to modify the config, return an object to merge config,
-   * or change the config parameter directly to mutate.
-   */
+export type SortedPlugin = Plugin & {
   config?: ConfigHook;
-  /**
-   * The final resolved config
-   */
   configResolved?: ConfigResolvedHook;
-  /** */
   resolveId?: ResolveIdHook;
   load?: LoadHook;
-  shouldTransformCachedModule?: ShouldTransformCachedModuleHook;
   transform?: TransformHook;
 };
 
@@ -90,12 +76,11 @@ export interface PluginContainer {
   ctx: PluginContext;
 
   // Config
-  config(config: UserConfig, env: { mode: string; command: string }): UserConfig | null | void;
+  config(config: InlineConfig, env: { mode: string; command: string }): InlineConfig | null | void;
   configResolved(config: ResolvedConfig): void;
   // File hooks
   resolveId(id: string, importer: string | undefined, _skip?: Array<SortedPlugin>): Promise<rollup.ResolveIdResult>;
   load(id: string): Promise<rollup.LoadResult>;
-  shouldTransformCachedModule(options: { code: string; id: string }): Promise<boolean>;
   transform(code: string, id: string): Promise<rollup.TransformResult>;
 }
 
@@ -130,8 +115,8 @@ export interface PluginContext {
 
 // Hook methods
 
-export type ConfigHook = (this: PluginContext, config: UserConfig, env: { mode: string; command: string }) => UserConfig | null | void;
-export type ConfigResolvedHook = (this: PluginContext, config: UserConfig) => void;
+export type ConfigHook = (this: void, config: InlineConfig, env: { mode: string; command: string }) => InlineConfig | null | void;
+export type ConfigResolvedHook = (this: void, config: ResolvedConfig) => void;
 
 export type ResolveIdHook = (
   this: PluginContext,
@@ -146,6 +131,8 @@ export type TransformHook = (this: PluginContext, source: string, id: string) =>
 // Helpers
 
 export type SortedPlugins = SortedPlugin[];
-
-type PluginHook<T> = T | { handler: T; enforce?: "pre" | "post" };
+export type HookHandler<T> = T extends ObjectHook<infer H> ? H : T;
+export type PluginWithRequiredHook<K extends keyof SortedPlugin> = SortedPlugin & {
+  [P in K]: NonNullable<Plugin[P]>;
+};
 type PromiseOpt<T> = T | Promise<T>;

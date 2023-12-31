@@ -7,6 +7,7 @@ import { existsSync, readFile } from "node:fs";
 import { ModuleGraph, ModuleNode } from "./moduleGraph";
 import { PartialLogger } from "utils/logger";
 import { normalizeId } from "utils/id";
+import { getSortedPluginsByHook, getHookHandler } from "../plugins";
 import { resolvePath as mllY_resolvePath, resolveImports as mlly_resolveImports, normalizeid } from "mlly";
 import * as cache from "cache";
 
@@ -50,7 +51,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
     ctx,
 
     config(config, env) {
-      let _sorted = sortPluginsHook(plugins, "config");
+      let _sorted = getSortedPluginsByHook("config", plugins);
       for (plugin of _sorted) {
         let res = plugin.config.call(ctx, config, env);
         if (!res) continue;
@@ -62,7 +63,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       return config;
     },
     configResolved(config) {
-      let _sorted = sortPluginsHook(plugins, "configResolved");
+      let _sorted = getSortedPluginsByHook("configResolved", plugins);
       for (plugin of _sorted) plugin.configResolved.call(ctx, config);
     },
     async resolveId(id, importer, _skip) {
@@ -70,7 +71,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       let resolved: string | null;
       // The name that gets added to the modulegraph
       let _plugin: string;
-      let _sorted = sortPluginsHook(plugins, "resolveId");
+      let _sorted = getSortedPluginsByHook("resolveId", plugins);
       // Execute resolveId hooks on plugins
       for (const p of _sorted) {
         if (!p.resolveId) continue;
@@ -102,7 +103,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
       let code: string;
       // The name that gets added to the modulegraph
       let _plugin: string;
-      let _sorted = sortPluginsHook(plugins, "load");
+      let _sorted = getSortedPluginsByHook("load", plugins);
       // Execute load hooks on plugins
       for (plugin of _sorted) {
         if (!plugin.load) continue;
@@ -121,7 +122,7 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
     },
     async transform(code, id) {
       const mod = moduleGraph.getModulesByFile(id);
-      let _sorted = sortPluginsHook(plugins, "transform");
+      let _sorted = getSortedPluginsByHook("transform", plugins);
 
       for (plugin of _sorted) {
         if (!plugin.transform) continue;
@@ -132,9 +133,9 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
         // implement source maps?
       }
       return { code };
-    },
-    async shouldTransformCachedModule(options) {
-      let _sorted = sortPluginsHook(plugins, "shouldTransformCachedModule");
+    }
+    /* async shouldTransformCachedModule(options) {
+      let _sorted = getSortedPluginsByHook("shouldTransformCachedModule", plugins);
       for (plugin of _sorted) {
         if (!plugin.shouldTransformCachedModule) continue;
         const res: boolean | null = await plugin.shouldTransformCachedModule.call(ctx, options);
@@ -143,37 +144,8 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
         return res;
       }
       return false;
-    }
+    } */
   };
 
   return container;
-}
-
-export const hooks = ["config", "configResolved", "resolveId", "load", "transform", "shouldTransformCachedModule"];
-
-export function sortPluginsHook(plugins: Plugin[], hook: Hook): SortedPlugin[] {
-  let sorted: SortedPlugin[][] = [[], [], [], [], [], []];
-
-  for (const plugin of plugins) {
-    const builtin = plugin.name.startsWith("nite:") ? 1 : 0;
-    let enforce = 2;
-    const hookMethod = plugin[hook];
-    if (typeof hookMethod == "object") enforce = hookMethod.enforce == "pre" ? 0 : hookMethod.enforce == "post" ? 4 : 2;
-    sorted[enforce + builtin].push(stripPlugin(plugin));
-  }
-  return sorted.flat(2);
-}
-
-function stripPlugin(plugin: Plugin): SortedPlugin {
-  let res: SortedPlugin = { name: plugin.name };
-  for (const prop in plugin) if (!hooks.includes(prop)) res[prop] = plugin[prop];
-
-  for (const hook of hooks) {
-    if (!plugin[hook]) continue;
-    const hookMethod = plugin[hook];
-    if (typeof hookMethod == "function") res[hook] = hookMethod;
-    else res[hook] = hookMethod.handler;
-  }
-
-  return res;
 }

@@ -1,5 +1,5 @@
 import { normalizeid } from "mlly";
-import { join } from "path";
+import { join } from "node:path";
 
 export class FileUrl {
   id: string;

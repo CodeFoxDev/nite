@@ -1,4 +1,4 @@
-import type { BuildOptions as ESBuildOptions } from "esbuild";
+import type { BuildOptions as ESBuildOptions, TransformOptions as ESBuildTransformOptions } from "esbuild";
 import type { RollupOptions } from "rollup";
 import type { Plugin } from "./modules";
 import type { WatchOptions } from "chokidar";
@@ -6,6 +6,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { cwd } from "node:process";
 import { Logger } from "utils/logger";
+import { mergeConfig } from "utils/config";
+import { normalizeNodeHook } from "utils/id";
 import { builtins } from "./plugins";
 
 // Valid names for the config file
@@ -16,42 +18,41 @@ export function defineConfig(config: UserConfig): UserConfig {
   return config;
 }
 
-let loaded: ResolvedConfig | null = null;
+type PluginOption = Plugin | false | PluginOption[] | Promise<Plugin | false | PluginOption[]>;
 
-export async function config(): Promise<ResolvedConfig | false> {
-  if (loaded != null) return loaded;
-  let id: string;
-  for (const _id of defaultConfigFiles) {
-    if (!fs.existsSync(path.resolve(cwd(), _id))) continue;
-    id = path.resolve(cwd(), _id);
-    break;
-  }
-
-  let config: UserConfig;
-  try {
-    config = (await import(`file://${id}`)).default;
-  } catch (err) {
-    return logger.error(`Failed to load config from: ${id}, err:`, err);
-  }
-
-  if (!config) return logger.error("Received empty config, while trying to resolve it");
-  loaded = config = loadDefaults(config);
-  //logger.info(config);
-  // load defaults
-  return config;
-}
-
-function loadDefaults(config: UserConfig): ResolvedConfig {
-  config.cacheDir ??= "node_modules/.nite";
-  config.root ??= ".";
-
-  return config;
-}
-
-export interface UserConfig {
+interface JsonOptions {
   /**
-   * The root of the project
-   * @default '.'
+   * Generate a named export for every property of the JSON object
+   * @default true
+   */
+  namedExports?: boolean;
+  /**
+   * Generate performant output as JSON.parse("stringified").
+   * Enabling this will disable namedExports.
+   * @default false
+   */
+  stringify?: boolean;
+}
+
+interface ServerOptions {
+  /**
+   * Chokidar watch options, or null to disable file watching
+   */
+  watch?: WatchOptions | null;
+}
+
+interface BuildOptions {
+  target: ESBuildTransformOptions["target"] | "false";
+  outDir?: string;
+  minify?: boolean | "esbuild";
+  rollupOptions?: RollupOptions;
+  emptyOutDir?: boolean | null;
+}
+
+interface UserConfig {
+  /**
+   * The root of the project, can be an absolute path or relative from the config file
+   * @default process.cwd()
    */
   root?: string;
   /**
@@ -59,14 +60,30 @@ export interface UserConfig {
    * @default 'node_modules/.nite'
    */
   cacheDir?: string;
-  build?: {
-    outDir?: string;
-    rollupOptions?: RollupOptions;
-  };
-  plugins?: Array<Plugin>;
+  /**
+   * Explicitly sets the mode of the application, overrides the default mode for each command
+   */
+  mode?: "development" | "build";
+  /**
+   * Array of plugins to use
+   */
+  plugins?: PluginOption[];
+
+  /* resolve?: {
+    alias
+  } */
+  /**
+   * Options that are used for json importing, will be passed to the `nite:json` plugin
+   */
+  json?: JsonOptions;
+  /**
+   * Options for esbuild, will be passed to the `nite:esbuild` plugin
+   */
   esbuild?: ESBuildOptions;
 
-  watch?: WatchOptions;
+  server?: ServerOptions;
+
+  build?: BuildOptions;
 }
 
 export interface InlineConfig extends UserConfig {
@@ -75,16 +92,45 @@ export interface InlineConfig extends UserConfig {
    * leave empty (or null) for default locations, and set to false to disable config file
    */
   configFile?: string | false;
-  mode?: "development" | "build";
 }
 
-export interface ResolvedConfig extends InlineConfig {
-  logger?; // Vite adds logger here, but also add it to the server interface?
-}
+export type ResolvedJsonOptions = Readonly<{
+  namedExports: boolean;
+  stringify: boolean;
+}>;
+
+export type ResolvedServerOptions = Readonly<{
+  watch: WatchOptions | null;
+}>;
+
+export type ResolvedBuildOptions = Readonly<{
+  target: ESBuildTransformOptions["target"] | "false";
+  outDir: string;
+  minify: boolean | "esbuild";
+  rollupOptions: RollupOptions;
+  emptyOutDir: boolean | null;
+}>;
+
+export type ResolvedConfig = Readonly<
+  Omit<UserConfig, "plugins" | "optimizeDeps" | "build"> & {
+    configFile: string | null;
+    inlineConfig: InlineConfig;
+    root: string;
+    cacheDir: string;
+    mode: string;
+    plugins: readonly Plugin[];
+    json: ResolvedJsonOptions;
+    esbuild: ESBuildOptions;
+    server: ResolvedServerOptions;
+    build: ResolvedBuildOptions;
+    //logger?; Vite adds logger here, but also add it to the server interface?
+  }
+>;
 
 export async function resolveConfig(inlineConfig: InlineConfig): Promise<ResolvedConfig> {
   let config: InlineConfig = inlineConfig;
   let mode = config.mode ?? "development";
+  if (!!process.env.NODE_ENV) process.env.NODE_ENV = mode;
 
   if (config.configFile !== false) {
     const loadResult = await loadConfigFromFile(config.configFile);
@@ -92,6 +138,11 @@ export async function resolveConfig(inlineConfig: InlineConfig): Promise<Resolve
       config = mergeConfig(config, loadResult.config);
     }
   }
+
+  mode = inlineConfig.mode || config.mode || mode;
+  console.log(config);
+
+  return;
 }
 
 async function loadConfigFromFile(file?: string, root: string = process.cwd()) {
@@ -120,17 +171,13 @@ async function loadConfigFromFile(file?: string, root: string = process.cwd()) {
   // TODO: Add support for ts in config file (by building this file)
   let config: UserConfig;
   try {
-    const configExport = (await import(resolved)).default;
+    const configExport = (await import(normalizeNodeHook(resolved))).default;
     config = await (typeof configExport == "function" ? configExport() : configExport);
 
     return {
       config
     };
-  } catch {
-    logger.error(`Failed to load config from ${resolved}`);
+  } catch (e) {
+    logger.error(`Failed to load config from ${normalizeNodeHook(resolved)}`, e);
   }
-}
-// Merges the config, the first value has the highest priority
-function mergeConfig(config, pluginConfig): InlineConfig {
-  return;
 }
