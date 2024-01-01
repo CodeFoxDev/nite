@@ -1,8 +1,8 @@
 import type { ResolvedConfig, InlineConfig } from "config";
 import type { FSWatcher, WatchOptions } from "chokidar";
-import type { PluginContainer } from "./index";
-import type { ModuleGraph } from "./moduleGraph";
-import { createPluginContainer } from "./pluginContainer";
+import type { PluginContainer } from "../modules";
+import { resolveConfig } from "config";
+import { createPluginContainer, ModuleGraph } from "../modules";
 
 export interface NiteDevServer {
   /**
@@ -13,7 +13,7 @@ export interface NiteDevServer {
    * Chokidar watcher instance
    * https://github.com/paulmillr/chokidar#api
    */
-  watcher: FSWatcher;
+  //watcher: FSWatcher;
   /**
    * The plugin container invoked by nite
    */
@@ -36,8 +36,18 @@ export type ResolvedServerOptions = Readonly<{
 }>;
 
 export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevServer> {
-  //const pluginContainer = createPluginContainer();
-  return;
+  const config = await resolveConfig(inlineConfig, "serve");
+
+  const moduleGraph = new ModuleGraph();
+  const container = createPluginContainer(config, moduleGraph);
+
+  let server: NiteDevServer = {
+    config,
+    moduleGraph,
+    pluginContainer: container
+  };
+
+  return server;
 }
 
 export function resolveServerOptions(config: InlineConfig): ResolvedServerOptions {

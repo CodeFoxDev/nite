@@ -3,40 +3,15 @@ import type { ObjectHook } from "rollup";
 import type { ResolvedConfig, InlineConfig } from "config";
 import type { CachedModule } from "cache/cache";
 import { Logger } from "utils/logger";
-import { getBuiltinPlugins } from "./builtins";
-import { createPluginContainer } from "./pluginContainer";
 
 const logger = new Logger(["plugins", "container"]);
 
-export function initializePlugins(config: InlineConfig) {
-  return;
-  const plugins = loadPlugins(config);
-  //const _sorted = sortPlugins(plugins);
-  //const container = createPluginContainer(_sorted, config);
-  //logger.info("Created plugin container succesfully");
-  //return container;
-}
-
-export function loadPlugins(config: InlineConfig) {
-  const configPlugins = config.plugins ?? [];
-  const builtinPlugins = getBuiltinPlugins();
-  //return [...configPlugins, ...builtinPlugins];
-}
-
-export function sortPlugins(plugins: Plugin[]): Plugin[] {
-  let sorted = [[], [], [], [], [], []];
-
-  for (const plugin of plugins) {
-    const enfore = plugin.enforce == "pre" ? 0 : plugin.enforce == "post" ? 4 : 2;
-    const builtin = plugin.name.startsWith("nite:") ? 1 : 0;
-    const index = enfore + builtin;
-    sorted[index].push(plugin);
-  }
-  return sorted.flat(2);
-}
-
 export type Hook = "config" | "configResolved" | "resolveId" | "load" | "shouldTransformCachedModule" | "transform";
 export type Format = "commonjs" | "module";
+
+// Export
+export { createPluginContainer } from "./pluginContainer";
+export { ModuleGraph, ModuleNode } from "./moduleGraph";
 
 // Plugins
 

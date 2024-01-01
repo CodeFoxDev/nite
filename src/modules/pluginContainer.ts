@@ -3,8 +3,8 @@
 // TODO: modify plugin to only include the useable methods
 import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from ".";
 import type { ModuleFormat } from "node:module";
-import { existsSync, readFile } from "node:fs";
-import { ModuleGraph, ModuleNode } from "./moduleGraph";
+import type { ModuleGraph } from "./moduleGraph";
+import type { ResolvedConfig } from "config";
 import { PartialLogger } from "utils/logger";
 import { normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
@@ -14,12 +14,12 @@ import * as cache from "cache";
 const logger = new PartialLogger(["plugins", "hooks"]);
 logger.condition(() => false);
 
-export function createPluginContainer(plugins: Plugin[], opts = {}) {
-  if (!Array.isArray(plugins)) plugins = [plugins];
+export function createPluginContainer(config: ResolvedConfig, moduleGraph: ModuleGraph) {
+  const { plugins } = config;
+  //if (!Array.isArray(plugins)) plugins = [plugins];
 
   let plugin: SortedPlugin | null = null;
   const _pluginLogger = new PartialLogger(["plugins"]);
-  const moduleGraph = new ModuleGraph();
 
   // The value of the `this` property in a plugin hook
   const ctx: PluginContext = {
@@ -57,7 +57,11 @@ export function createPluginContainer(plugins: Plugin[], opts = {}) {
         if (!res) continue;
         for (const key in res) {
           if (typeof config[key] == "undefined") config[key] = res[key];
-          else _pluginLogger.warnName(plugin.name, `Tried merging the key: ${key}, but it has already been defined, skipping value...`);
+          else
+            _pluginLogger.warnName(
+              plugin.name,
+              `Tried merging the key: ${key}, but it has already been defined, skipping value...`
+            );
         }
       }
       return config;

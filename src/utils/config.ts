@@ -41,3 +41,9 @@ export async function asyncFlatten<T>(arr: T[]): Promise<T[]> {
   } while (arr.some((v: any) => v?.then));
   return arr;
 }
+
+export function booleanValue(provided: boolean | null, defaults: boolean) {
+  if (provided === true) return true;
+  else if (provided === false) return false;
+  else return defaults;
+}

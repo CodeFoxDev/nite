@@ -2,7 +2,7 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
 import { resolveConfig } from "config";
-import { PluginContainer, initializePlugins } from "modules";
+import { PluginContainer } from "modules";
 import { PartialLogger } from "utils/logger";
 import { FileUrl, normalizeId, normalizeNodeHook } from "utils/id";
 import { detectSyntax } from "mlly";
@@ -13,7 +13,7 @@ type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promi
 const logger = new PartialLogger(["loader"]);
 let container: PluginContainer | null;
 
-resolveConfig({});
+resolveConfig({}, "serve");
 
 export async function initialize({ number, port }: { number: number; port: MessagePort }) {
   //const _config = await config();
@@ -24,10 +24,17 @@ export async function initialize({ number, port }: { number: number; port: Messa
   //container = initializePlugins(_config);
 }
 
-export async function resolve(specifier: string, context: ResolveHookContext, nextResolve: nextResolve): Promise<ResolveFnOutput> {
+export async function resolve(
+  specifier: string,
+  context: ResolveHookContext,
+  nextResolve: nextResolve
+): Promise<ResolveFnOutput> {
   const { parentURL = null } = context;
   if (!container) return nextResolve(specifier);
-  const res = await container.resolveId(normalizeId(specifier), parentURL != undefined ? normalizeId(parentURL) : undefined);
+  const res = await container.resolveId(
+    normalizeId(specifier),
+    parentURL != undefined ? normalizeId(parentURL) : undefined
+  );
   // Let nodejs resolve if nothing is returned
   if (!res || (typeof res == "object" && !res.id)) return nextResolve(specifier);
   let id = typeof res == "string" ? res : res.id;
@@ -47,7 +54,8 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   // Inject transform hooks
   let source = typeof lRes == "string" ? lRes : lRes.code;
   let tRes = await container.transform(source, normalizeId(url));
-  const tempSrc = typeof tRes == "string" ? tRes : !tRes || (typeof tRes == "object" && !tRes.code) ? source : tRes.code;
+  const tempSrc =
+    typeof tRes == "string" ? tRes : !tRes || (typeof tRes == "object" && !tRes.code) ? source : tRes.code;
   const format = determineFormat(url, context, tempSrc);
 
   // Return correct code

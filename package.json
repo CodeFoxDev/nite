@@ -23,7 +23,7 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./loader": "./dist/loader/index.js"
+    "./loader": "./dist/loader/register.js"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.5",
