@@ -2,7 +2,6 @@ import type { CachedModule, EntryInfo } from "./cache";
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
-import { config } from "config";
 import { PartialLogger } from "utils/logger";
 
 const logger = new PartialLogger(["cache"]);
@@ -53,9 +52,10 @@ function getCode(info: EntryInfo) {
 }
 
 async function getCacheDir() {
-  const conf = await config();
+  return "node_modules/.nite";
+  /* const conf = await config();
   const cacheDir = conf ? conf.cacheDir : "node_modules/.nite";
-  return cacheDir;
+  return cacheDir; */
 }
 
 function getEntries() {

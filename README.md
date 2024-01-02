@@ -36,6 +36,8 @@
       - [ ] this.cache
         - [ ] this.cache.get
         - [ ] this.cache.set
+      > Fixes
+      - [ ] Remove context from config* hooks, and update context on other hooks
     - [x] ordering
     - loading
       - Allow rollup-only plugins to load with `apply="buid"` and `enfore="post"`

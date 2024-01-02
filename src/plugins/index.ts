@@ -20,8 +20,8 @@ export async function resolvePlugins(
     PluginOptimizedDeps(config),
     // Alias plugin
     ...prePlugins,
-    PluginESBuild(config),
     PluginJSON(config),
+    PluginESBuild(config),
     ...normalPlugins,
     ...postPlugins,
     PluginEntryTime(),

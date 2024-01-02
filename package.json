@@ -7,6 +7,9 @@
   "scripts": {
     "build": "rimraf dist && rollup -c"
   },
+  "bin": {
+    "nite": "./bin/nite.js"
+  },
   "keywords": [],
   "author": "Codefoxdev",
   "license": "MIT",

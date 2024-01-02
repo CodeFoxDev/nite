@@ -1,12 +1,12 @@
 import type { BuildOptions as ESBuildOptions, TransformOptions as ESBuildTransformOptions } from "esbuild";
 import type { RollupOptions } from "rollup";
 import type { Plugin } from "./modules";
-import type { ServerOptions, ResolvedServerOptions } from "./modules/server";
+import type { ServerOptions, ResolvedServerOptions } from "server";
 import type { WatchOptions } from "chokidar";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cwd } from "node:process";
-import { resolveServerOptions } from "./modules/server";
+import { resolveServerOptions } from "server";
 import { Logger } from "utils/logger";
 import { mergeConfig, asyncFlatten, booleanValue } from "utils/config";
 import { normalizeNodeHook, normalizePath } from "utils/id";
