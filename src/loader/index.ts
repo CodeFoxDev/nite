@@ -15,18 +15,41 @@ export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput 
 let server: NiteDevServer;
 let container: PluginContainer;
 
+const awaiting: Function[] = [];
+
 // Initialize the server in an async block, to avoid top-level await
-(async function () {
-  server = await createServer({});
-  container = server.pluginContainer;
-})();
+function init() {
+  const first = Date.now();
+  createServer({}).then((val) => {
+    server = val;
+    container = server.pluginContainer;
+    for (const i of awaiting) i();
+    console.log(`Started dev server in ${Date.now() - first} ms`);
+  });
+}
+// When using await here it takes 3 times as long (250 ms -> ~800ms entry execution time)
+init();
+
+let count = {
+  calls: 0,
+  resolved: 0
+};
 
 export async function resolve(
   specifier: string,
   context: ResolveHookContext,
   nextResolve: nextResolve
 ): Promise<ResolveFnOutput> {
+  count.calls++;
+  //console.log(specifier);
+  // Temporary implementation of ?node query
+  if (specifier.endsWith("?node")) {
+    console.log(specifier);
+    const normal = specifier.replace("?node", "");
+    return nextResolve(normal);
+  }
   const { parentURL = null } = context;
+  // Can't await container, as createServer uses an import statement that requires this hook
   if (!container) return nextResolve(specifier);
   const res = await container.resolveId(
     normalizeId(specifier),
@@ -35,7 +58,8 @@ export async function resolve(
   // Let nodejs resolve if nothing is returned
   if (!res || (typeof res == "object" && !res.id)) return nextResolve(specifier);
   let id = typeof res == "string" ? res : res.id;
-
+  count.resolved++;
+  //console.log(count);
   return {
     shortCircuit: true,
     url: normalizeNodeHook(id),
@@ -44,6 +68,11 @@ export async function resolve(
 }
 
 export async function load(url: string, context: LoadHookContext, nextLoad: nextLoad): Promise<LoadFnOutput> {
+  // Temporary implementation of ?node query
+  if (url.endsWith("?node")) {
+    const normal = url.replace("?node", "");
+    return nextLoad(normal, context);
+  }
   // Inject load hooks
   if (!container) return nextLoad(url, context);
   let lRes = await container.load(normalizeId(url));

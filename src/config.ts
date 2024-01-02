@@ -225,7 +225,7 @@ async function loadConfigFromFile(file?: string, root: string = process.cwd()) {
   // TODO: Add support for ts in config file (by building this file)
   let config: UserConfig;
   try {
-    const configExport = (await import(normalizeNodeHook(resolved))).default;
+    const configExport = (await import(`${normalizeNodeHook(resolved)}?node`)).default;
     config = await (typeof configExport == "function" ? configExport() : configExport);
 
     return {

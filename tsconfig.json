@@ -6,8 +6,8 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "declaration": true,
-    "target": "ES2022",
-    "module": "ES2020",
+    "target": "ESNext",
+    "module": "ESNext",
   },
   "include": [
     "src"

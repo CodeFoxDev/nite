@@ -84,19 +84,21 @@
         Node.js v18.19.0
         ```
   - Dev 'server' with reloading on file change, or shortcut in terminal
-  - Devtools with load/transform stack overview (like vite-plugin-inspect)
+  - Devtools with load/transform stack overview (like vite-plugin-inspect) (in seperate plugin?)
   - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
 - Cache
   - [x] Bundle the library into single file (like vite)
-  - Optimize code
-  - Change file names to reflect the library
-  - Add config option to exclude/include libraries (optimizeDeps from vite)
+  - [ ] Optimize code
+  - [ ] Change file names to reflect the library
+  - [ ] Add config option to exclude/include libraries (optimizeDeps from vite)
 - Env
-  - Load .env files same way that vite does it
-  - Add env to import.meta.env (also add vite's custom env variables)
-  
-# Features
-- Import aliases?
+  - [ ] Load .env files same way that vite does it
+  - [ ] Add env to import.meta.env (also add vite's custom env variables)
+- Imports
+  - [ ] Import aliases
+  - [ ] Import queries
+    - `*?node` completely skip plugins on import
+
 
 - https://nodejs.org/api/module.html#customization-hooks
 - https://rollupjs.org/plugin-development

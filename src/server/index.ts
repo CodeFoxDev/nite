@@ -50,6 +50,7 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
   return server;
 }
 
+// TODO: Move this to config, because of circular dependency
 export function resolveServerOptions(config: InlineConfig): ResolvedServerOptions {
   let resolved: ResolvedServerOptions;
 

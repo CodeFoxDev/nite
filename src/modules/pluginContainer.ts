@@ -120,7 +120,11 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
 
       if (!code) return null;
       const mod = moduleGraph.getModulesByFile(id);
-      mod.loadResult = { plugin: _plugin, code };
+      if (mod) mod.loadResult = { plugin: _plugin, code };
+      else
+        logger.warn(
+          `Module: ${id}, doesn't exist in the moduleGraph, but the load hook tried to modify its loadResult property`
+        );
 
       return { code };
     },
@@ -133,7 +137,11 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         const res = await plugin.transform.call(ctx, code, id);
         if (!res) continue;
         code = typeof res == "object" ? res.code : res;
-        mod.transformResult.add({ code, plugin: plugin.name });
+        if (mod) mod.transformResult.add({ code, plugin: plugin.name });
+        else
+          logger.warn(
+            `Module: ${id}, doesn't exist in the moduleGraph, but the load hook tried to modify its transformResult property`
+          );
         // implement source maps?
       }
       return { code };
