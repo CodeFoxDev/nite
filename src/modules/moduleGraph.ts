@@ -1,26 +1,28 @@
 import type { ModuleFormat } from "node:module";
-import type { LoadResult as _LoadResult, TransformResult as _TransformResult } from "rollup";
 
 export class ModuleNode {
   /**
-   * - `node:path` for nodejs builtin modules
-   * - `rollup` for node modules located in the node_modules folder
-   * - e.g. `/src/index.ts` for normal imports, these are relative to the project root (`process.cwd`)
+   * - The name of an external module located in the node_modules folder (e.g. `rollup`)
+   * - The name of a builtin nodejs module (e.g. `node:fs`) the same as `file`
+   * - The resolved id of a virtual module, also the same as `file`
    */
-  id: string | null;
+  id?: string | null;
   /**
-   * The normalized location of the file in the filesystem,
-   * the id of a virtual module prefixed with `\0`,
-   * or the if of a builtin nodejs module
+   * - The resolved absolute location of this module
+   * - The name of a builtin nodejs module (e.g. `node:fs`)
+   * - The resolved id of a virtual module prefixed with `\0`
    */
   file: string;
   /**
    * The resolved format of the module,
-   * currently `json` isn't used because json is transpiled to js for named exports and tree-shaking
-   * and `wasm` isn't supported at the moment
+   * - `builtin` if the id starts with `node:*` (a builtin module)
    */
   format: ModuleFormat;
+
+  // Meta data
   virtual = false;
+  nodeModule = false;
+  version?: string | null;
 
   /**
    * All the modules that import this node
@@ -37,25 +39,31 @@ export class ModuleNode {
   transformResult = new Set<TransformStackNode>();
 
   /**
-   * @param fileOrId The absolute file url starting with the prefix `file:///` or nodejs builtin module starting with the prefix `node:`
+   * @param id Normalized using the builtin normalizeId function
    */
-  constructor(fileOrId: string) {
-    if (!fileOrId) return;
+  constructor(id: string) {
+    if (!id) return;
     // check if it is absolute
-    if (fileOrId.startsWith("node:")) {
-      this.id = this.file = fileOrId;
+    if (id.startsWith("node:")) {
+      this.id = this.file = id;
       this.format = "builtin";
-    } else if (fileOrId.startsWith("\0") || fileOrId.startsWith("virtual:")) {
-      this.id = this.file = fileOrId;
+    } else if (id.startsWith("\0") || id.startsWith("virtual:")) {
+      this.id = this.file = id;
       this.virtual = true;
-    } else this.file = fileOrId;
+    } else if (id.includes("node_modules")) {
+      this.file = id;
+      this.nodeModule = true;
+      //console.log(id);
+    } else {
+      this.file = id;
+    }
   }
 }
 
 type ResolveIdResult = { plugin: string };
 type LoadResult = { code: string; plugin: string };
 type TransformStackNode = { code: string; plugin: string };
-type TransformResult = TransformStackNode[];
+type TransformResult = Set<TransformStackNode>;
 
 export class ModuleGraph {
   idToModuleMap = new Map<string, ModuleNode>();
@@ -68,11 +76,6 @@ export class ModuleGraph {
 
   getModulesByFile(file: string): ModuleNode | undefined {
     return this.fileToModuleMap.get(file);
-  }
-
-  ensureEntryFromId(id: string): ModuleNode {
-    let mod = this.getModulesById(id);
-    if (mod) return mod;
   }
 
   ensureEntryFromFile(file: string): ModuleNode {

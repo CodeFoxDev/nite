@@ -8,6 +8,8 @@ export default function PluginESBuild(config: ResolvedConfig): Plugin {
   return {
     name: "nite:esbuild",
 
+    async resolveId(id, importer) {},
+
     async transform(src, id) {
       if (id.includes("node_modules")) return;
       const parsed = parseId(id);

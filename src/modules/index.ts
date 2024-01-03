@@ -1,7 +1,6 @@
 import type * as rollup from "rollup";
 import type { ObjectHook } from "rollup";
 import type { ResolvedConfig, InlineConfig } from "config";
-import type { CachedModule } from "cache/cache";
 import { Logger } from "utils/logger";
 
 const logger = new Logger(["plugins", "container"]);
@@ -74,10 +73,10 @@ export interface PluginContext {
     watchMode: boolean;
   };
 
-  cache: {
+  /*   cache: {
     get(id: string): Promise<Required<CachedModule> | null>;
     set(id: string, src: string): Promise<Required<CachedModule>>;
-  };
+  }; */
 
   // Methods
   resolve(

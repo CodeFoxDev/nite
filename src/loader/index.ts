@@ -18,17 +18,21 @@ let container: PluginContainer;
 const awaiting: Function[] = [];
 
 // Initialize the server in an async block, to avoid top-level await
-function init() {
+async function init() {
   const first = Date.now();
-  createServer({}).then((val) => {
-    server = val;
-    container = server.pluginContainer;
-    for (const i of awaiting) i();
-    console.log(`Started dev server in ${Date.now() - first} ms`);
-  });
+  server = await createServer({});
+  container = server.pluginContainer;
+  console.log(`Started dev server in ${Date.now() - first} ms`);
 }
 // When using await here it takes 3 times as long (250 ms -> ~800ms entry execution time)
-init();
+const _i = init();
+
+export async function initialize({ number, port }: { number: number; port: MessagePort }) {
+  if (container) port.postMessage("initialized");
+  _i.then(() => {
+    port.postMessage("initialized");
+  });
+}
 
 let count = {
   calls: 0,
@@ -41,10 +45,8 @@ export async function resolve(
   nextResolve: nextResolve
 ): Promise<ResolveFnOutput> {
   count.calls++;
-  //console.log(specifier);
   // Temporary implementation of ?node query
   if (specifier.endsWith("?node")) {
-    console.log(specifier);
     const normal = specifier.replace("?node", "");
     return nextResolve(normal);
   }

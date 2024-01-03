@@ -25,3 +25,10 @@ export interface CachedModule {
 export interface EntryInfo extends CachedModule {
   id: string;
 }
+
+export interface CachedBundle {
+  /**
+   * The module's name e.g. `vite`
+   */
+  name: string;
+}

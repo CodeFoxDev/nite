@@ -8,8 +8,7 @@ import type { ResolvedConfig } from "config";
 import { PartialLogger } from "utils/logger";
 import { normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
-import { resolvePath as mllY_resolvePath, resolveImports as mlly_resolveImports, normalizeid } from "mlly";
-import * as cache from "cache";
+//import { analyzeImports } from "./optimizer";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 logger.condition(() => false);
@@ -28,14 +27,14 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
       watchMode: false
     },
 
-    cache: {
+    /* cache: {
       async get(id) {
         return cache.get(id);
       },
       async set(id, src) {
         return cache.set(id, src);
       }
-    },
+    }, */
 
     resolve(id, importer, options) {
       return container.resolveId(id, importer);
@@ -90,7 +89,6 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         _plugin = plugin.name;
         break;
       }
-
       if (!resolved) return null;
       const mod = moduleGraph.ensureEntryFromFile(normalizeId(resolved));
       mod.resolveIdResult = { plugin: _plugin };
@@ -117,6 +115,8 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         _plugin = plugin.name;
         break;
       }
+
+      //if (code) await analyzeImports(code, id);
 
       if (!code) return null;
       const mod = moduleGraph.getModulesByFile(id);
