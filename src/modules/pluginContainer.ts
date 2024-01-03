@@ -5,6 +5,7 @@ import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from 
 import type { ModuleFormat } from "node:module";
 import type { ModuleGraph } from "./moduleGraph";
 import type { ResolvedConfig } from "config";
+import { performance } from "node:perf_hooks";
 import { PartialLogger } from "utils/logger";
 import { normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
@@ -26,6 +27,8 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
       rollupVersion: "4.9.1", // TODO: read this from package.json?
       watchMode: false
     },
+
+    moduleGraph,
 
     /* cache: {
       async get(id) {
@@ -72,8 +75,8 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
     async resolveId(id, importer, _skip) {
       if (!id) return null;
       let resolved: string | null;
+      const s = performance.now();
       // The name that gets added to the modulegraph
-      let _plugin: string;
       let _sorted = getSortedPluginsByHook("resolveId", plugins);
       // Execute resolveId hooks on plugins
       for (const p of _sorted) {
@@ -86,25 +89,28 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         let res = await plugin.resolveId.call(ctx, id, importer);
         if (!res) continue;
         resolved = typeof res == "object" ? res.id : res;
-        _plugin = plugin.name;
         break;
       }
       if (!resolved) return null;
       const mod = moduleGraph.ensureEntryFromFile(normalizeId(resolved));
-      mod.resolveIdResult = { plugin: _plugin };
+      mod.resolveIdResult = {
+        plugin: plugin.name,
+        time: performance.now() - s
+      };
       if (importer) {
         const importerMod = moduleGraph.ensureEntryFromFile(normalizeId(importer));
         mod.importers.add(importerMod);
         importerMod.imported.add(mod);
-      }
+      } // Else it's the entry file
 
       return resolved;
     },
     async load(id) {
-      if (!id) return;
+      if (!id) return null;
       let code: string;
+      const s = performance.now();
+      const mod = moduleGraph.getModulesByFile(id);
       // The name that gets added to the modulegraph
-      let _plugin: string;
       let _sorted = getSortedPluginsByHook("load", plugins);
       // Execute load hooks on plugins
       for (plugin of _sorted) {
@@ -112,15 +118,18 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         const res = await plugin.load.call(ctx, id);
         if (!res) continue;
         code = res;
-        _plugin = plugin.name;
         break;
       }
 
       //if (code) await analyzeImports(code, id);
 
       if (!code) return null;
-      const mod = moduleGraph.getModulesByFile(id);
-      if (mod) mod.loadResult = { plugin: _plugin, code };
+      if (mod)
+        mod.loadResult = {
+          plugin: plugin.name,
+          code,
+          time: performance.now() - s
+        };
       else
         logger.warn(
           `Module: ${id}, doesn't exist in the moduleGraph, but the load hook tried to modify its loadResult property`
@@ -134,15 +143,20 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
 
       for (plugin of _sorted) {
         if (!plugin.transform) continue;
+        const s = performance.now();
         const res = await plugin.transform.call(ctx, code, id);
         if (!res) continue;
         code = typeof res == "object" ? res.code : res;
-        if (mod) mod.transformResult.add({ code, plugin: plugin.name });
+        if (mod)
+          mod.transformResult.add({
+            code,
+            plugin: plugin.name,
+            time: performance.now() - s
+          });
         else
           logger.warn(
-            `Module: ${id}, doesn't exist in the moduleGraph, but the load hook tried to modify its transformResult property`
+            `Module: ${id}, doesn't exist in the moduleGraph, but the transform hook tried to modify its transformResult property`
           );
-        // implement source maps?
       }
       return { code };
     }

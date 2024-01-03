@@ -2,6 +2,7 @@ import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput
 import type { MessagePort } from "node:worker_threads";
 import type { PluginContainer } from "modules";
 import type { NiteDevServer } from "server";
+import { performance } from "node:perf_hooks";
 import { createServer } from "server";
 import { FileUrl, normalizeId, normalizeNodeHook } from "utils/id";
 import { detectSyntax } from "mlly";
@@ -70,6 +71,7 @@ export async function resolve(
 }
 
 export async function load(url: string, context: LoadHookContext, nextLoad: nextLoad): Promise<LoadFnOutput> {
+  const s = performance.now();
   // Temporary implementation of ?node query
   if (url.endsWith("?node")) {
     const normal = url.replace("?node", "");
@@ -89,6 +91,8 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   // Return correct code
   if (!tRes || (typeof tRes == "object" && !tRes.code)) return { shortCircuit: true, format, source };
   source = tempSrc;
+
+  console.log(`Loaded module in ${performance.now() - s} ms`);
 
   return {
     shortCircuit: true,

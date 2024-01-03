@@ -51,18 +51,27 @@ export class ModuleNode {
       this.id = this.file = id;
       this.virtual = true;
     } else if (id.includes("node_modules")) {
+      const info = getNodeModuleInfo(id);
+      if (!info) return; // Should never happen, but check yarn and npm compatibility anyway
+      this.id = info.name;
+      this.version = info.version;
       this.file = id;
       this.nodeModule = true;
-      //console.log(id);
     } else {
       this.file = id;
     }
   }
 }
 
-type ResolveIdResult = { plugin: string };
-type LoadResult = { code: string; plugin: string };
-type TransformStackNode = { code: string; plugin: string };
+type DefaultResult = {
+  plugin: string;
+  code: string;
+  time: number;
+};
+
+type ResolveIdResult = Omit<DefaultResult, "code">;
+type LoadResult = DefaultResult;
+type TransformStackNode = DefaultResult;
 type TransformResult = Set<TransformStackNode>;
 
 export class ModuleGraph {
@@ -85,4 +94,17 @@ export class ModuleGraph {
     this.fileToModuleMap.set(file, mod);
     return mod;
   }
+}
+
+const NAME_VERSION_RE = /\/([a-zA-Z-_+@]+?)@([0-9.]+)[^ \/]*?\//;
+
+function getNodeModuleInfo(file: string) {
+  if (!file.includes("node_modules")) return null;
+  const m = NAME_VERSION_RE.exec(file);
+  if (!m) return null;
+  return {
+    full: m[0],
+    name: m[1],
+    version: m[2]
+  };
 }
