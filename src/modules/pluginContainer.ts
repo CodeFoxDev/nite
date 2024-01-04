@@ -5,18 +5,18 @@ import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from 
 import type { ModuleFormat } from "node:module";
 import type { ModuleGraph } from "./moduleGraph";
 import type { ResolvedConfig } from "config";
+import type { FSWatcher } from "chokidar";
 import { performance } from "node:perf_hooks";
 import { PartialLogger } from "utils/logger";
 import { normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
-//import { analyzeImports } from "./optimizer";
+import { analyzeImports } from "./optimizer";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 logger.condition(() => false);
 
 export function createPluginContainer(config: ResolvedConfig, moduleGraph: ModuleGraph) {
   const { plugins } = config;
-  //if (!Array.isArray(plugins)) plugins = [plugins];
 
   let plugin: SortedPlugin | null = null;
   const _pluginLogger = new PartialLogger(["plugins"]);
@@ -121,7 +121,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         break;
       }
 
-      //if (code) await analyzeImports(code, id);
+      //if (code) code = await analyzeImports(code, id);
 
       if (!code) return null;
       if (mod)

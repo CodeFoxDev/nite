@@ -25,7 +25,7 @@ export default function PluginDefault(): Plugin {
         const src = readFileSync(id, { encoding: "utf-8" });
         return src;
       } catch (e) {
-        this.error(`Failed to load file: ${id}, fs.readFileSync error:`, e);
+        console.error(`Failed to load file: ${id}, fs.readFileSync error:`, e);
         return null;
       }
     }

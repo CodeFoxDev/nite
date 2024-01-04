@@ -83,6 +83,7 @@ export function isVirtual(id: string): boolean {
 }
 
 export function normalizeId(id: string): string {
+  if (id === undefined || id === null) return null;
   if (isVirtual(id)) return id;
   let n = normalizeid(id);
   if (n.startsWith("file:///")) n = n.replace("file:///", "");
@@ -98,7 +99,10 @@ export function normalizeId(id: string): string {
 }
 
 export function normalizeNodeHook(id: string): string {
-  if (isVirtual(id)) return normalizePath(`file:///${join(process.cwd(), `__${id.startsWith("\0")}__${id.replace(":", "/").replace("\0", "")}`)}`);
+  if (isVirtual(id))
+    return normalizePath(
+      `file:///${join(process.cwd(), `__${id.startsWith("\0")}__${id.replace(":", "/").replace("\0", "")}`)}`
+    );
   const n = normalizeid(id);
   if (!n.startsWith("file://")) return n;
   return n.replace("file://", "file:///");

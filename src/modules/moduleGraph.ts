@@ -37,6 +37,9 @@ export class ModuleNode {
   resolveIdResult: ResolveIdResult;
   loadResult: LoadResult;
   transformResult = new Set<TransformStackNode>();
+  // Total node hooks performance
+  nodeResolveTime: number;
+  nodeLoadTime: number;
 
   /**
    * @param id Normalized using the builtin normalizeId function
