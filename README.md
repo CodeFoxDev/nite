@@ -60,7 +60,7 @@
         }
         ```
   - Config
-    - [ ] Load config file and add proper types and options
+    - [x] Load config file and add proper types and options
     - [ ] Parse config file (if it is: ts, etc.)
     - [x] Load / Parse package.json for determining package type (module, commonjs, etc.)
     - [ ] Load / Parse tsconfig.json for esbuild
@@ -95,7 +95,8 @@
     - optimizeDeps.include is not yet used
 - Env
   - [ ] Load .env files same way that vite does it
-  - [ ] Add env to import.meta.env (also add vite's custom env variables)
+    - I think it's the same but haven't tested it thoroughly yet
+  - [x] Add env to import.meta.env (also add vite's custom env variables)
 - Imports
   - [ ] Import aliases
   - [ ] Import queries

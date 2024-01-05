@@ -107,3 +107,11 @@ export function normalizeNodeHook(id: string): string {
   if (!n.startsWith("file://")) return n;
   return n.replace("file://", "file:///");
 }
+
+export function getExtension(path: string) {
+  if (!path.includes(".")) return null;
+  const c = path.split(".");
+  const i = c[c.length - 1];
+  if (i.includes("/")) return null;
+  else return i;
+}

@@ -121,7 +121,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         break;
       }
 
-      if (code) analyzeImports(code, id, config);
+      //if (code) analyzeImports(code, id, config);
 
       if (!code) return null;
       if (mod)

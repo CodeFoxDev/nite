@@ -1,6 +1,7 @@
 import type { ObjectHook } from "rollup";
 import type { Plugin, HookHandler, PluginWithRequiredHook, SortedPlugin } from "modules";
 
+import PluginAlias from "./alias";
 import PluginOptimizedDeps from "./optimizeDeps";
 import PluginJSON from "./json";
 import PluginESBuild from "./esbuild";
@@ -18,8 +19,8 @@ export async function resolvePlugins(
   const isBuild = config.command == "build";
 
   return [
+    PluginAlias(config),
     PluginOptimizedDeps(config),
-    // Alias plugin
     ...prePlugins,
     PluginJSON(config),
     PluginESBuild(config),

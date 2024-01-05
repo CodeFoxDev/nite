@@ -24,6 +24,7 @@ export default function PluginENV(config: ResolvedConfig): Plugin {
     // TODO: Also load into process.env object
     async transform(src, id) {
       await Once("es-module-lexer", async () => await init);
+
       const [imports] = parse(src);
       for (const i of imports) {
         if (i.d !== -2) continue;

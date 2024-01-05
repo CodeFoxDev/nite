@@ -17,6 +17,8 @@ export default function PluginOptimizedDeps(config: ResolvedConfig): Plugin {
         logger.warn("The dependency optimizer is still experimental, usage may result in more errors")
       );
 
+      analyzeImports(src, id, config);
+
       const map = importsMap.find((e) => e.id == id);
       if (!map) return;
       let res = src;

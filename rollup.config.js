@@ -18,6 +18,7 @@ export default defineConfig([
       "node:process",
       "node:perf_hooks",
       "dotenv",
+      "magic-string",
       "esbuild",
       "mlly",
       "es-module-lexer",
