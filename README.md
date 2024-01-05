@@ -86,11 +86,13 @@
   - Dev 'server' with reloading on file change, or shortcut in terminal
   - Devtools with load/transform stack overview (like vite-plugin-inspect) (in seperate plugin?)
   - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
-- Cache
+- optimzeDeps
   - [x] Bundle the library into single file (like vite)
-  - [ ] Optimize code
-  - [ ] Change file names to reflect the library
+    - Error: Cannot find module @rollup/rollup-win32-x64-msvc. npm has a bug related to optional dependencies (with prebundled version of vite)
+  - [x] Optimize code
+    - Converted to esm
   - [ ] Add config option to exclude/include libraries (optimizeDeps from vite)
+    - optimizeDeps.include is not yet used
 - Env
   - [ ] Load .env files same way that vite does it
   - [ ] Add env to import.meta.env (also add vite's custom env variables)

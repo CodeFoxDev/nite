@@ -11,9 +11,9 @@ import { PartialLogger } from "utils/logger";
 import { normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
 import { analyzeImports } from "./optimizer";
+import { Once } from "utils/run";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
-logger.condition(() => false);
 
 export function createPluginContainer(config: ResolvedConfig, moduleGraph: ModuleGraph) {
   const { plugins } = config;
@@ -121,7 +121,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         break;
       }
 
-      //if (code) code = await analyzeImports(code, id);
+      if (code) analyzeImports(code, id, config);
 
       if (!code) return null;
       if (mod)

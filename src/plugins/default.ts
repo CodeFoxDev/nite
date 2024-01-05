@@ -1,5 +1,6 @@
 import type { Plugin } from "modules";
-import { existsSync, readFileSync } from "fs";
+import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { resolvePath } from "mlly";
 import { normalizeId } from "utils/id";
 
@@ -19,10 +20,10 @@ export default function PluginDefault(): Plugin {
       else return resolve(`${id}.ts`, importer);
     },
 
-    load(id) {
+    async load(id) {
       if (id.startsWith("node:")) return null; // If the default is null, it will trigger nodejs' loadhook, which will properly resolve `node:*`
       try {
-        const src = readFileSync(id, { encoding: "utf-8" });
+        const src = await readFile(id, { encoding: "utf-8" });
         return src;
       } catch (e) {
         console.error(`Failed to load file: ${id}, fs.readFileSync error:`, e);

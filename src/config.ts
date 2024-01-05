@@ -41,6 +41,13 @@ interface JsonOptions {
   stringify?: boolean;
 }
 
+interface OptimizeDepsOptions {
+  include?: string[];
+  exclude?: string[];
+  esbuildOptions?: ESBuildOptions;
+  disabled?: boolean;
+}
+
 interface BuildOptions {
   target: ESBuildTransformOptions["target"] | "false";
   outDir?: string;
@@ -77,6 +84,7 @@ interface UserConfig {
   /* resolve?: {
     alias
   } */
+  optimizeDeps?: OptimizeDepsOptions;
   /**
    * Options that are used for json importing, will be passed to the `nite:json` plugin
    */
@@ -104,6 +112,13 @@ export type ResolvedJsonOptions = Readonly<{
   stringify: boolean;
 }>;
 
+export type ResolvedOptimizeDepsOptions = Readonly<{
+  include: string[];
+  exclude: string[];
+  esbuildOptions: ESBuildOptions;
+  disabled: boolean;
+}>;
+
 export type ResolvedBuildOptions = Readonly<{
   target: ESBuildTransformOptions["target"] | "false";
   outDir: string;
@@ -122,6 +137,7 @@ export type ResolvedConfig = Readonly<
     command: "build" | "serve";
     mode: "development" | "build";
     plugins: readonly Plugin[];
+    optimizeDeps: ResolvedOptimizeDepsOptions;
     json: ResolvedJsonOptions;
     esbuild: ESBuildOptions;
     server: ResolvedServerOptions;
@@ -175,6 +191,7 @@ export async function resolveConfig(inlineConfig: InlineConfig, command: "build"
     command,
     mode,
     plugins: [],
+    optimizeDeps: resolveOptimizeDepsOptions(config),
     json: {
       namedExports: config.json?.stringify ? false : config.json?.namedExports ?? true,
       stringify: booleanValue(config.json?.stringify, false)
@@ -197,6 +214,38 @@ export async function resolveConfig(inlineConfig: InlineConfig, command: "build"
   runConfigResolvedHook(resolved, resolvedPlugins);
 
   return resolved;
+}
+
+function resolveOptimizeDepsOptions(config: InlineConfig): ResolvedOptimizeDepsOptions {
+  const esbuildOptions = mergeConfig(
+    {
+      bundle: true,
+      minify: false,
+      platform: "node",
+      format: "esm",
+      target: "esnext",
+      external: ["lightningcss"],
+      plugins: [],
+      banner: {
+        js: `import { createRequire as __nite_createRequire } from 'node:module';
+import { fileURLToPath as __nite_fileUrlToPath } from 'node:url';
+const require = __nite_createRequire(import.meta.url);
+const __filename = __nite_fileUrlToPath(import.meta.url);
+const __dirname = __nite_fileUrlToPath(new URL('.', import.meta.url));`
+      },
+      outExtension: {
+        ".js": ".mjs"
+      }
+    },
+    config.optimizeDeps?.esbuildOptions
+  );
+
+  return {
+    include: config.optimizeDeps?.include ?? [],
+    exclude: config.optimizeDeps?.exclude ?? ["vite"],
+    esbuildOptions,
+    disabled: config.optimizeDeps?.disabled ?? false
+  };
 }
 
 async function loadConfigFromFile(file?: string, root: string = process.cwd()) {

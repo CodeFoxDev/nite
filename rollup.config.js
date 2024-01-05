@@ -1,5 +1,6 @@
 import { defineConfig } from "rollup";
 import typescript from "@rollup/plugin-typescript";
+import nodeResolve from "@rollup/plugin-node-resolve";
 
 export default defineConfig([
   {
@@ -12,9 +13,14 @@ export default defineConfig([
       "node:module",
       "node:worker_threads",
       "node:fs",
+      "node:fs/promises",
       "node:path",
       "node:process",
+      "node:perf_hooks",
+      "dotenv",
       "esbuild",
+      "mlly",
+      "es-module-lexer",
       "@rollup/pluginutils"
     ],
     output: {
@@ -23,6 +29,6 @@ export default defineConfig([
       exports: "named",
       preserveModules: true
     },
-    plugins: [typescript()]
+    plugins: [typescript(), nodeResolve()]
   }
 ]);

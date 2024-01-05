@@ -1,10 +1,11 @@
 import type { ObjectHook } from "rollup";
 import type { Plugin, HookHandler, PluginWithRequiredHook, SortedPlugin } from "modules";
 
-import PluginOptimizedDeps from "./optimizedDeps";
+import PluginOptimizedDeps from "./optimizeDeps";
 import PluginJSON from "./json";
 import PluginESBuild from "./esbuild";
 import PluginEntryTime from "./entryTime";
+import PluginENV from "./env";
 import PluginDefault from "./default";
 import { ResolvedConfig } from "config";
 
@@ -24,6 +25,7 @@ export async function resolvePlugins(
     PluginESBuild(config),
     ...normalPlugins,
     ...postPlugins,
+    PluginENV(config),
     PluginEntryTime(),
     PluginDefault()
   ];
