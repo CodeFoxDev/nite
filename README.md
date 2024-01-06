@@ -68,6 +68,7 @@
 - DX
   - Proper error handling
     - Nodejs operations with errorcodes
+      - Parse error codes to proper messages in console
     - Change nodejs errors to have proper file lines, instead of the build one (only in build mode)
     - Nite errors with proper error messages
       - Code 'chunks' where the error occured (similar to esbuild and wmr)
@@ -101,6 +102,7 @@
   - [ ] Import aliases
   - [ ] Import queries
     - `*?node` completely skip plugins on import
+    - Different queries for asset loading (html, css, etc.)?
 
 
 - https://nodejs.org/api/module.html#customization-hooks
