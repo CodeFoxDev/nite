@@ -79,7 +79,9 @@ async function resolveImport(
 
 async function bundleDep(name: string, entry: string, config: ResolvedConfig) {
   const s = performance.now();
-  const bundledDir = path.resolve(process.cwd(), "node_modules/.nite");
+  const t = path.resolve(process.cwd(), "node_modules/.nite");
+  if (!fs.existsSync(t)) fs.mkdirSync(t);
+  const bundledDir = path.resolve(t, "deps");
   if (!fs.existsSync(bundledDir)) fs.mkdirSync(bundledDir);
   const version = getVersion(entry);
   const outFile = path.resolve(bundledDir, `dep-${name}@${version}.js`);

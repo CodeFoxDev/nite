@@ -8,7 +8,7 @@ import type { ResolvedConfig } from "config";
 import type { FSWatcher } from "chokidar";
 import { performance } from "node:perf_hooks";
 import { PartialLogger } from "utils/logger";
-import { normalizeId } from "utils/id";
+import { isProjectFile, normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
 import { analyzeImports } from "./optimizer";
 import { Once } from "utils/run";
@@ -148,7 +148,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         if (!res) continue;
         code = typeof res == "object" ? res.code : res;
         if (mod)
-          mod.transformResult.add({
+          mod.transformResult.push({
             code,
             plugin: plugin.name,
             time: performance.now() - s
@@ -158,6 +158,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
             `Module: ${id}, doesn't exist in the moduleGraph, but the transform hook tried to modify its transformResult property`
           );
       }
+      if (isProjectFile(id)) moduleGraph.cacheModule(mod);
       return { code };
     }
     /* async shouldTransformCachedModule(options) {

@@ -65,6 +65,9 @@
     - [x] Load / Parse package.json for determining package type (module, commonjs, etc.)
     - [ ] Load / Parse tsconfig.json for esbuild
 - build
+  - [ ] Use rollup to build project
+    - [ ] Apply settings
+    - [ ] Include plugins that apply on build
 - DX
   - Proper error handling
     - Nodejs operations with errorcodes
@@ -89,7 +92,7 @@
   - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
 - optimzeDeps
   - [x] Bundle the library into single file (like vite)
-    - Error: Cannot find module @rollup/rollup-win32-x64-msvc. npm has a bug related to optional dependencies (with prebundled version of vite)
+    - "Error: Cannot find module @rollup/rollup-win32-x64-msvc. npm has a bug related to optional dependencies" (with prebundled version of vite)
   - [x] Optimize code
     - Converted to esm
   - [ ] Add config option to exclude/include libraries (optimizeDeps from vite)
@@ -99,6 +102,7 @@
     - I think it's the same but haven't tested it thoroughly yet
   - [x] Add env to import.meta.env (also add vite's custom env variables)
 - Imports
+  - [ ] Allow importing from links? (like in deno?)
   - [ ] Import aliases
   - [ ] Import queries
     - `*?node` completely skip plugins on import

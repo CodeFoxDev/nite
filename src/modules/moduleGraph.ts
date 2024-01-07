@@ -1,4 +1,5 @@
 import type { ModuleFormat } from "node:module";
+import { cacheModule, ModuleCache } from "./moduleCache";
 
 export class ModuleNode {
   /**
@@ -25,6 +26,11 @@ export class ModuleNode {
   version?: string | null;
 
   /**
+   * The ModuleCache instance
+   */
+  cache?: ModuleCache;
+
+  /**
    * All the modules that import this node
    */
   importers = new Set<ModuleNode>();
@@ -36,7 +42,7 @@ export class ModuleNode {
   // Plugin hook results
   resolveIdResult: ResolveIdResult;
   loadResult: LoadResult;
-  transformResult = new Set<TransformStackNode>();
+  transformResult: TransformResult[] = [];
   // Total node hooks performance
   nodeResolveTime: number;
   nodeLoadTime: number;
@@ -72,10 +78,9 @@ type DefaultResult = {
   time: number;
 };
 
-type ResolveIdResult = Omit<DefaultResult, "code">;
-type LoadResult = DefaultResult;
-type TransformStackNode = DefaultResult;
-type TransformResult = Set<TransformStackNode>;
+export type ResolveIdResult = Omit<DefaultResult, "code">;
+export type LoadResult = DefaultResult;
+export type TransformResult = DefaultResult;
 
 export class ModuleGraph {
   idToModuleMap = new Map<string, ModuleNode>();
@@ -97,6 +102,16 @@ export class ModuleGraph {
     this.fileToModuleMap.set(file, mod);
     return mod;
   }
+
+  /**
+   * Caches the provided module for future use
+   */
+  cacheModule(node: ModuleNode) {
+    node.cache = new ModuleCache(node);
+    cacheModule(node, node.cache);
+  }
+
+  getCachedModule(node: ModuleNode) {}
 }
 
 const NAME_VERSION_RE = /\/([a-zA-Z-_+@]+?)@([0-9.]+)[^ \/]*?\//;

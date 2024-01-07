@@ -6,6 +6,7 @@ export default defineConfig([
   {
     input: {
       index: "src/index.ts",
+      cli: "src/cli.ts",
       "loader/register": "src/loader/register.ts",
       "loader/index": "src/loader/index.ts"
     },

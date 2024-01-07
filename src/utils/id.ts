@@ -1,5 +1,6 @@
 import { normalizeid } from "mlly";
-import { join } from "node:path";
+import * as path from "node:path";
+import * as fs from "node:fs";
 
 export class FileUrl {
   id: string;
@@ -82,6 +83,12 @@ export function isVirtual(id: string): boolean {
   return id.startsWith("\0") || id.startsWith("virtual:");
 }
 
+export function isProjectFile(id: string): boolean {
+  if (isVirtual(id)) return false;
+  else if (id.includes("node_modules")) return false;
+  return true;
+}
+
 export function normalizeId(id: string): string {
   if (id === undefined || id === null) return null;
   if (isVirtual(id)) return id;
@@ -101,7 +108,7 @@ export function normalizeId(id: string): string {
 export function normalizeNodeHook(id: string): string {
   if (isVirtual(id))
     return normalizePath(
-      `file:///${join(process.cwd(), `__${id.startsWith("\0")}__${id.replace(":", "/").replace("\0", "")}`)}`
+      `file:///${path.join(process.cwd(), `__${id.startsWith("\0")}__${id.replace(":", "/").replace("\0", "")}`)}`
     );
   const n = normalizeid(id);
   if (!n.startsWith("file://")) return n;
@@ -114,4 +121,20 @@ export function getExtension(path: string) {
   const i = c[c.length - 1];
   if (i.includes("/")) return null;
   else return i;
+}
+
+export function ensureDir<T extends string>(dir: T): T {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+  return dir;
+}
+
+// relative to `process.cwd()`
+export function ensureDirRelative(dir: string): string {
+  const seg = dir.split("/");
+  let res = process.cwd();
+  for (const p of seg) {
+    res = path.resolve(res, p);
+    ensureDir(res);
+  }
+  return res;
 }

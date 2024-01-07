@@ -1,7 +1,9 @@
 #! /usr/bin/env node
 
-console.log(process.argv);
+//console.log(process.argv);
 
-function start() {
-  
+async function start() {
+  await import("../dist/cli.js");
 }
+
+start();

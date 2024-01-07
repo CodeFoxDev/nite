@@ -33,6 +33,7 @@ export default function PluginAlias(config: ResolvedConfig): Plugin {
         s.update(i.s, i.e, relativeResolve(id, res));
       }
       const r = s.toString();
+      if (!s.hasChanged()) return;
       return r;
     }
   };
