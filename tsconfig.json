@@ -4,10 +4,10 @@
     // Dist
     "outDir": "dist",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "declaration": true,
     "target": "ESNext",
     "module": "ESNext",
+    // Declartion
+    "declaration": true,
   },
   "include": [
     "src"

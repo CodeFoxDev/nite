@@ -1,15 +1,16 @@
 import { defineConfig } from "rollup";
 import typescript from "@rollup/plugin-typescript";
 import nodeResolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 
 export default defineConfig([
   {
     input: {
-      index: "src/index.ts",
       cli: "src/cli.ts",
-      "loader/register": "src/loader/register.ts",
+      index: "src/index.ts",
       "loader/index": "src/loader/index.ts"
     },
+    // Figure out how to include some modules (like cac)
     external: [
       "node:module",
       "node:worker_threads",
@@ -23,14 +24,21 @@ export default defineConfig([
       "esbuild",
       "mlly",
       "es-module-lexer",
-      "@rollup/pluginutils"
+      "@rollup/pluginutils",
+      "cac"
     ],
     output: {
       dir: "dist",
       format: "es",
       exports: "named",
-      preserveModules: true
+      preserveModules: true,
+      preserveModulesRoot: "src"
     },
-    plugins: [typescript(), nodeResolve()]
+    plugins: [
+      typescript({
+        tsconfig: "./tsconfig.json"
+      }),
+      nodeResolve()
+    ]
   }
 ]);
