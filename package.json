@@ -32,11 +32,9 @@
     "./loader": "./dist/loader/register.js"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
     "@types/node": "^20.10.5",
-    "glob": "^10.3.10",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
   }

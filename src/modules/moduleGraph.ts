@@ -1,5 +1,5 @@
 import type { ModuleFormat } from "node:module";
-import { cacheModule, ModuleCache } from "./moduleCache";
+import { ModuleCache, cachedModules, getCacheFile, calculateHash } from "./moduleCache";
 
 export class ModuleNode {
   /**
@@ -70,6 +70,29 @@ export class ModuleNode {
       this.file = id;
     }
   }
+
+  cacheModule() {
+    if (!this.cache)
+      this.cache = new ModuleCache(
+        {
+          file: this.file,
+          cacheFile: getCacheFile(),
+          hash: calculateHash(this)
+        },
+        this.transformResult[this.transformResult.length - 1]
+      );
+    const f = cachedModules.find((e) => e.file == this.file);
+    if (!f) this.cache.cache();
+  }
+
+  getCachedModule() {
+    const f = cachedModules.find((e) => e.file == this.file);
+    if (!f) return null;
+    this.cache = new ModuleCache(f);
+    return this.cache;
+  }
+
+  // compareCachedModule()
 }
 
 type DefaultResult = {
@@ -102,16 +125,6 @@ export class ModuleGraph {
     this.fileToModuleMap.set(file, mod);
     return mod;
   }
-
-  /**
-   * Caches the provided module for future use
-   */
-  cacheModule(node: ModuleNode) {
-    node.cache = new ModuleCache(node);
-    cacheModule(node, node.cache);
-  }
-
-  getCachedModule(node: ModuleNode) {}
 }
 
 const NAME_VERSION_RE = /\/([a-zA-Z-_+@]+?)@([0-9.]+)[^ \/]*?\//;

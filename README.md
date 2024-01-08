@@ -114,3 +114,5 @@
 - https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js
 - https://vitejs.dev/guide/api-plugin.html#plugin-ordering
 - https://esbuild.github.io/api/#js-sync
+
+https://www.npmjs.com/package/nightly

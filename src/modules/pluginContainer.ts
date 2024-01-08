@@ -121,8 +121,6 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
         break;
       }
 
-      //if (code) analyzeImports(code, id, config);
-
       if (!code) return null;
       if (mod)
         mod.loadResult = {
@@ -139,6 +137,8 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
     },
     async transform(code, id) {
       const mod = moduleGraph.getModulesByFile(id);
+      const isCached = mod.getCachedModule();
+      if (isCached) console.log(id);
       let _sorted = getSortedPluginsByHook("transform", plugins);
 
       for (plugin of _sorted) {
@@ -158,7 +158,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
             `Module: ${id}, doesn't exist in the moduleGraph, but the transform hook tried to modify its transformResult property`
           );
       }
-      if (isProjectFile(id)) moduleGraph.cacheModule(mod);
+      if (isProjectFile(id)) mod.cacheModule();
       return { code };
     }
     /* async shouldTransformCachedModule(options) {
