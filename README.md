@@ -107,7 +107,11 @@
   - [ ] Import queries
     - `*?node` completely skip plugins on import
     - Different queries for asset loading (html, css, etc.)?
-
+- Caching
+  - [ ] Implement cache comparing (with hash?)
+  - [ ] Use cache when loads are similar
+  - [ ] Implement hook to cancel using cache (shouldTransformCachedModule, not sure if this is the right one, rollup documentation is a bit weird?)
+  - [ ] Add config option to change / disable behaiviour
 
 - https://nodejs.org/api/module.html#customization-hooks
 - https://rollupjs.org/plugin-development
