@@ -56,6 +56,12 @@ export class ModuleCache {
     // Update modules file
     updateModulesJson(this._cacheData);
   }
+
+  async loadCache(): null | Promise<string> {
+    if (!fs.existsSync(this.cacheFile)) return null;
+    const src = await fsp.readFile(this.cacheFile, { encoding: "utf-8" });
+    return src;
+  }
 }
 
 export function getCacheFile(): string {

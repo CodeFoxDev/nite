@@ -137,8 +137,11 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
     },
     async transform(code, id) {
       const mod = moduleGraph.getModulesByFile(id);
-      const isCached = mod.getCachedModule();
-      if (isCached) console.log(id);
+      const cache = mod.getCachedModule();
+      if (cache !== null && typeof cache == "object") {
+        const loaded = await cache.loadCache();
+        if (typeof loaded == "string") return { code: loaded };
+      }
       let _sorted = getSortedPluginsByHook("transform", plugins);
 
       for (plugin of _sorted) {
