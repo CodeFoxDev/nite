@@ -1,11 +1,11 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
 import type * as rollup from "rollup";
-import type { PluginContainer } from "modules";
+import type { ModuleGraph, PluginContainer } from "modules";
 import type { NiteDevServer } from "server";
 import { performance } from "node:perf_hooks";
 import { createServer } from "server";
-import { FileUrl, normalizeId, normalizeNodeHook } from "utils/id";
+import { FileUrl, isVirtual, normalizeId, normalizeNodeHook } from "utils/id";
 import { Logger } from "utils/logger";
 import { detectSyntax } from "mlly";
 
@@ -18,6 +18,7 @@ export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput 
 const logger = new Logger(["loader"]);
 let server: NiteDevServer;
 let container: PluginContainer;
+let baseImporter: string;
 
 // Initialize the server in an async block, to avoid top-level await
 async function init() {
@@ -29,7 +30,8 @@ async function init() {
 
 const _i = init();
 
-export async function initialize({ number, port }: { number: number; port: MessagePort }) {
+export async function initialize({ port, importer }: { port: MessagePort; importer: string }) {
+  baseImporter = importer;
   if (container) port.postMessage("initialized");
   _i.then(() => port.postMessage("initialized"));
 }
@@ -44,8 +46,9 @@ export async function resolve(
   if (!container) return nextResolve(specifier);
   if (specifier.endsWith("?node")) return nextResolve(specifier.replace("?node", ""));
 
+  const importer = context.parentURL === baseImporter ? undefined : normalizeId(context.parentURL);
   // Inject resolveId hooks
-  const res = await container.resolveId(normalizeId(specifier), normalizeId(context.parentURL));
+  const res = await container.resolveId(normalizeId(specifier), importer);
   if (!res || (typeof res == "object" && !res.id)) return nextResolve(specifier);
   let id = typeof res == "string" ? res : res.id;
 
@@ -67,12 +70,30 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   if (url.endsWith("?node")) return nextLoad(url.replace("?node", ""), context);
 
   // Inject load hooks
-  const lRes = await container.load(normalizeId(url));
+  const id = normalizeId(url);
+  const lRes = await container.load(id);
   if (!lRes) return nextLoad(url, context);
   let source = typeof lRes == "string" ? lRes : lRes.code;
 
+  const mod = server.moduleGraph.getModulesByFile(id);
+  const cached = mod.getCachedModule();
+  const isSame = mod.compareCachedModule();
+  if (cached !== null && isSame === true && !isVirtual(id)) {
+    const sRes = await container.shouldTransformCachedModule({ code: source, id });
+    if (sRes !== true) {
+      const cachedCode = await cached.loadCache();
+      //console.log(cached, id, cachedCode !== null);
+      //console.log(`skipped id: ${id}`);
+      return {
+        shortCircuit: true,
+        format: determineFormat(url, context, cachedCode),
+        source: cachedCode
+      };
+    }
+  }
+
   // Inject transform hooks
-  const tRes = await container.transform(source, normalizeId(url));
+  const tRes = await container.transform(source, id);
   if (!tRes)
     return {
       shortCircuit: true,
@@ -84,9 +105,7 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   const format = determineFormat(url, context, source);
 
   // Add total time to the moduleGraph
-  const mod = server.moduleGraph.getModulesByFile(normalizeId(url));
   if (mod) mod.nodeLoadTime = performance.now() - s;
-
   return {
     shortCircuit: true,
     format,

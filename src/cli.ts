@@ -27,7 +27,10 @@ cli
     const resolvedEntry = normalizePath(path.resolve(resolvedRoot, resolvePackage.main));
 
     // Pass cli options to the loader
-    await import("./loader/register");
+    const { register } = await import("./loader/register");
+    await register(import.meta.url);
+
+    // TODO: Wrap with try {} to catch and parse all errors
     await import(normalizeNodeHook(resolvedEntry));
   });
 

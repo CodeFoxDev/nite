@@ -4,30 +4,31 @@ export default function PluginEntryTime(): Plugin {
   const vmodId = "virtual:nite-entry";
   const vmodIdResolved = "\0" + vmodId;
 
-  let finished = false;
+  let entryId: string;
   return {
     name: "nite:entry",
 
-    resolveId(id) {
+    resolveId(id, importer) {
+      if (importer === undefined) entryId = id;
       if (id == vmodId) return vmodIdResolved;
     },
 
     load(id) {
       if (id != vmodIdResolved) return;
-      return `export function __nite__entry__c(a) {
+      return `export const start_time = Date.now();
+      export function entry_time(a) {
         console.log('\x1b[90m'+(new Date()).toLocaleTimeString()+'\x1b[0m','\x1b[36m[nite]\x1b[90m[plugins][entry]\x1b[0m',a);
-      }; __nite__entry__c("Loaded entry file in "+(Date.now()-${Date.now()})+" miliseconds");`;
+      }; /* entry_time("Loaded entry file in "+(Date.now()-start_time)+" miliseconds"); */`;
     },
 
     transform(src, id) {
-      if (finished) return;
-      finished = true;
+      if (id !== entryId) return;
 
       return {
         code: `
         // Start of injection by nite:entry
-        import { __nite__entry__c } from "${vmodId}";
-        __nite__entry__c("Executed entry file in "+(Date.now()-${Date.now()})+" miliseconds");
+        import { entry_time as __nite__entry__plugin, start_time as __nite__entry__time } from "${vmodId}";
+        __nite__entry__plugin("Executed entry file in "+(Date.now()-__nite__entry__time)+" miliseconds");
         // End of injection by nite:entry
         ${src}`
       };

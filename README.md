@@ -12,7 +12,7 @@
         - Default load: add support for queries in id
       - [x] transform
       - [ ] moduleParsed (not during dev)
-      - [ ] shouldTransformCachedModule
+      - [x] shouldTransformCachedModule
       - [ ] watchChange
       - [ ] buildEnd
       - [ ] closeBundle

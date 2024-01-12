@@ -86,13 +86,19 @@ export class ModuleNode {
   }
 
   getCachedModule() {
+    if (this.cache) return this.cache;
     const f = cachedModules.find((e) => e.file == this.file);
     if (!f) return null;
     this.cache = new ModuleCache(f);
     return this.cache;
   }
 
-  // compareCachedModule()
+  compareCachedModule() {
+    if (!this.cache) this.getCachedModule();
+    if (!this.cache || !this.loadResult) return null;
+    const currHash = calculateHash(this);
+    return currHash === this.cache.hash;
+  }
 }
 
 type DefaultResult = {

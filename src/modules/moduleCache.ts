@@ -55,6 +55,7 @@ export class ModuleCache {
     this._cacheData = { file: this.file, cacheFile: this.cacheFile, hash: this.hash };
     // Update modules file
     updateModulesJson(this._cacheData);
+    cacheModule(null, this);
   }
 
   async loadCache(): null | Promise<string> {
@@ -76,7 +77,7 @@ export function calculateHash(node: ModuleNode) {
   return hash.digest("hex");
 }
 
-export function cacheModule(node: ModuleNode, cache: ModuleCache) {
+export async function cacheModule(node: ModuleNode, cache: ModuleCache) {
   if (!cache.transformResult) return;
   const data: ModuleCacheInfo = {
     file: cache.file,
@@ -87,14 +88,15 @@ export function cacheModule(node: ModuleNode, cache: ModuleCache) {
   updateModulesJson(data);
 
   // Write cached
-  fsp.writeFile(data.cacheFile, createContent(cache));
+  await fsp.writeFile(data.cacheFile, createContent(cache));
 }
 
-function updateModulesJson(data: ModuleCacheInfo) {
+function updateModulesJson(data?: ModuleCacheInfo) {
   if (fs.existsSync(modulesJson) || cachedModules.length > 0) {
     const content = fs.readFileSync(modulesJson);
     cachedModules = JSON.parse(content.toString()) as ModuleCacheInfo[];
   } else ensureDirRelative("node_modules/.nite");
+  if (!data) return;
   cachedModules.push(data);
   fs.writeFileSync(modulesJson, JSON.stringify(cachedModules, null, "\t"));
 }
@@ -122,3 +124,5 @@ function parseContent(code: string): TransformResult {
     code: code
   };
 }
+
+updateModulesJson();

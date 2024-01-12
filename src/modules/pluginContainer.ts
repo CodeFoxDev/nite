@@ -163,18 +163,18 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
       }
       if (isProjectFile(id)) mod.cacheModule();
       return { code };
-    }
-    /* async shouldTransformCachedModule(options) {
+    },
+    async shouldTransformCachedModule(options) {
       let _sorted = getSortedPluginsByHook("shouldTransformCachedModule", plugins);
       for (plugin of _sorted) {
         if (!plugin.shouldTransformCachedModule) continue;
         const res: boolean | null = await plugin.shouldTransformCachedModule.call(ctx, options);
         if (res == null) continue;
-        logger.infoName("shouldTransformCachedModule", { id: options.id, plugin: plugin.name });
+        // TODO: Add to module graph
         return res;
       }
       return false;
-    } */
+    }
   };
 
   return container;

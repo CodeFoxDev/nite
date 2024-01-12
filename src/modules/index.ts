@@ -34,6 +34,7 @@ export interface Plugin /*  extends rollup.Plugin */ {
   /** */
   resolveId?: ObjectHook<ResolveIdHook>;
   load?: ObjectHook<LoadHook>;
+  shouldTransformCachedModule?: ObjectHook<ShouldTransformCachedModuleHook>;
   transform?: ObjectHook<TransformHook>;
 }
 
@@ -42,6 +43,7 @@ export type SortedPlugin = Plugin & {
   configResolved?: ConfigResolvedHook;
   resolveId?: ResolveIdHook;
   load?: LoadHook;
+  shouldTransformCachedModule?: ShouldTransformCachedModuleHook;
   transform?: TransformHook;
 };
 
@@ -56,6 +58,7 @@ export interface PluginContainer {
   // File hooks
   resolveId(id: string, importer: string | undefined, _skip?: Array<SortedPlugin>): Promise<rollup.ResolveIdResult>;
   load(id: string): Promise<rollup.LoadResult>;
+  shouldTransformCachedModule(options: { code: string; id: string }): Promise<boolean>;
   transform(code: string, id: string): Promise<rollup.TransformResult>;
 }
 
