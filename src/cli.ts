@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import { normalizePath, normalizeNodeHook } from "utils/id";
+import { c } from "utils/logger";
 import { VERSION } from "./constants";
 import { cac } from "cac";
 
@@ -26,9 +27,14 @@ cli
     const resolvePackage = getPackageContent(resolvedRoot);
     const resolvedEntry = normalizePath(path.resolve(resolvedRoot, resolvePackage.main));
 
+    // TODO: Move server creation to here
+
     // Pass cli options to the loader
     const { register } = await import("./loader/register");
-    await register(import.meta.url);
+    const t = await register(import.meta.url);
+
+    console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${t} ms`);
+    console.log(`  ${c.dim().green("➜")}  ${c.dim("press")} h ${c.dim("to show help")}`);
 
     // TODO: Wrap with try {} to catch and parse all errors
     await import(normalizeNodeHook(resolvedEntry));

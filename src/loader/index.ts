@@ -25,7 +25,7 @@ async function init() {
   const first = Date.now();
   server = await createServer({});
   container = server.pluginContainer;
-  logger.info(`Started dev server in ${Date.now() - first} ms`);
+  return Date.now() - first;
 }
 
 const _i = init();
@@ -33,7 +33,9 @@ const _i = init();
 export async function initialize({ port, importer }: { port: MessagePort; importer: string }) {
   baseImporter = importer;
   if (container) port.postMessage("initialized");
-  _i.then(() => port.postMessage("initialized"));
+  _i.then((val) => {
+    port.postMessage(val);
+  });
 }
 
 export async function resolve(

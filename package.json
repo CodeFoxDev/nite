@@ -19,10 +19,10 @@
     "chokidar": "^3.5.3",
     "dotenv": "^16.3.1",
     "es-module-lexer": "^1.4.1",
-    "esbuild": "^0.19.10",
+    "esbuild": "^0.19.11",
     "magic-string": "^0.30.5",
-    "mlly": "^1.4.2",
-    "rollup": "^4.9.1"
+    "mlly": "^1.5.0",
+    "rollup": "^4.9.5"
   },
   "engines": {
     "node": "^18.19.0 || >=20.0.0"
@@ -32,9 +32,10 @@
     "./loader": "./dist/loader/register.js"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@types/node": "^20.10.5",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.11.0",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
   }

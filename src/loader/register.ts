@@ -3,7 +3,9 @@ import { MessageChannel } from "node:worker_threads";
 
 const { port1, port2 } = new MessageChannel();
 
-export async function register(importer: string) {
+let done = false;
+
+export async function register(importer: string): Promise<number> {
   return new Promise((resolve) => {
     n_register("./index.js", {
       parentURL: import.meta.url,
@@ -11,8 +13,6 @@ export async function register(importer: string) {
       transferList: [port2]
     });
 
-    port1.on("message", (val) => {
-      if (val == "initialized") resolve(null);
-    });
+    port1.on("message", (val) => resolve(val));
   });
 }

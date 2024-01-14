@@ -244,7 +244,7 @@ const __dirname = __nite_fileUrlToPath(new URL('.', import.meta.url));`
     include: config.optimizeDeps?.include ?? [],
     exclude: config.optimizeDeps?.exclude ?? ["vite"],
     esbuildOptions,
-    disabled: config.optimizeDeps?.disabled ?? false
+    disabled: config.optimizeDeps?.disabled ?? config.optimizeDeps === null ? true : false
   };
 }
 

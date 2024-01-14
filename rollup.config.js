@@ -1,6 +1,7 @@
 import { defineConfig } from "rollup";
 import typescript from "@rollup/plugin-typescript";
-import nodeResolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
+import resolve from "@rollup/plugin-node-resolve";
 
 export default defineConfig([
   {
@@ -24,7 +25,8 @@ export default defineConfig([
       "mlly",
       "es-module-lexer",
       "@rollup/pluginutils",
-      "cac"
+      "cac",
+      "picocolors"
     ],
     output: {
       dir: "dist",
@@ -34,10 +36,11 @@ export default defineConfig([
       preserveModulesRoot: "src"
     },
     plugins: [
-      typescript({
-        tsconfig: "./tsconfig.json"
+      typescript(),
+      commonjs({
+        include: ["node_modules/**"]
       }),
-      nodeResolve()
+      resolve()
     ]
   }
 ]);

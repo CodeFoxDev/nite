@@ -94,11 +94,35 @@ export class PartialLogger extends Logger {
   }
 }
 
-// TODO: overwrite all console logging functions
-/* (() => {
-  if (!modifyConsoleLog) return;
-  const _logger = new Logger("untracked");
-  console.log = (...data) => { _logger.info(...data) }
-  console.warn = (...data) => { _logger.warn(...data) }
-  console.error = (...data) => { _logger.error(...data) }
-})(); */
+export function warn(msg: string) {
+  console.log(c.yellow(msg));
+}
+
+const R = "\x1b[0m";
+
+let stack = "";
+
+function f(code: string, str: string): any {
+  stack += `${code}`;
+  if (typeof str == "string") {
+    const res = `${stack}${str}${R}` as string;
+    stack = "";
+    return res;
+  }
+  return c;
+}
+
+interface C {
+  dim(str?: string): C;
+  green(str?: string): C;
+  yellow(str?: string): C;
+  cyan(str?: string): C;
+}
+
+export const c: C = {
+  dim: (str) => f("\x1b[2m", str),
+
+  green: (str) => f("\x1b[32m", str),
+  yellow: (str) => f("\x1b[33m", str),
+  cyan: (str) => f("\x1b[36m", str)
+};

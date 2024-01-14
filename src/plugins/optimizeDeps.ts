@@ -1,7 +1,7 @@
-import { Logger } from "utils/logger";
 import type { ResolvedConfig } from "../config";
 import type { Plugin } from "../modules";
 import { importsMap, analyzeImports } from "modules/optimizer";
+import { Logger, warn } from "utils/logger";
 import { Once } from "utils/run";
 
 const logger = new Logger(["plugins", "optimizeDeps"]);
@@ -13,8 +13,9 @@ export default function PluginOptimizedDeps(config: ResolvedConfig): Plugin {
 
     async transform(src, id) {
       if (config.optimizeDeps.disabled === true) return;
-      Once("warn-dep-optimizer", () =>
-        logger.warn("The dependency optimizer is still experimental, usage may result in more errors")
+
+      Once("optimizeDeps-warning", () =>
+        warn("(!) The dependency optimizer is still experimental, usage may result in unexpected errors")
       );
 
       analyzeImports(src, id, config);
