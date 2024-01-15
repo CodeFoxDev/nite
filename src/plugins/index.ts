@@ -27,7 +27,7 @@ export async function resolvePlugins(
     ...normalPlugins,
     ...postPlugins,
     PluginENV(config),
-    PluginEntryTime(),
+    /* PluginEntryTime(), */
     PluginDefault()
   ];
 }

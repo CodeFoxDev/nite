@@ -1,7 +1,8 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
+import * as readLine from "node:readline/promises";
 import { normalizePath, normalizeNodeHook } from "utils/id";
-import { c } from "utils/logger";
+import { c, errorQuit } from "utils/logger";
 import { VERSION } from "./constants";
 import { cac } from "cac";
 
@@ -24,15 +25,15 @@ cli
   .action(async (root: string, options) => {
     if (root === undefined) root = ".";
     const resolvedRoot = path.resolve(process.cwd(), root);
-    const resolvePackage = getPackageContent(resolvedRoot);
+    const resolvePackage = await getPackageContent(resolvedRoot, root);
     const resolvedEntry = normalizePath(path.resolve(resolvedRoot, resolvePackage.main));
 
-    // TODO: Move server creation to here
-
-    // Pass cli options to the loader
+    // TODO: Pass cli options to the loader
+    // TODO: Return instance to the server, or some way to interact with it here
     const { register } = await import("./loader/register");
     const t = await register(import.meta.url);
 
+    await bindCliShortcuts();
     console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${t} ms`);
     console.log(`  ${c.dim().green("➜")}  ${c.dim("press")} h ${c.dim("to show help")}`);
 
@@ -48,13 +49,23 @@ cli.help();
 cli.version(VERSION);
 cli.parse();
 
-function getPackageContent(root: string) {
+async function getPackageContent(root: string, specified: string) {
   const resolved = path.resolve(root, "package.json");
   if (!fs.existsSync(resolved)) {
-    console.error("ERROR: No package.json found in the project root");
+    if (specified == ".") await errorQuit(`${c.red("No package.json found in the project root")}`);
+    else await errorQuit(`${c.red("Failed to locate specified entry file")}`);
+    // TODO: quit here because the file doesn't exist
     return { main: "index.js" };
   }
   const content = fs.readFileSync(resolved, { encoding: "utf-8" });
   const parsed = JSON.parse(content);
   return parsed;
+}
+
+async function bindCliShortcuts() {
+  /* const rl = readLine.createInterface({ input: process.stdin });
+
+  rl.on("line", (i) => {
+    if (i === "h") console.log("help");
+  }); */
 }

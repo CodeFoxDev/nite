@@ -98,6 +98,13 @@ export function warn(msg: string) {
   console.log(c.yellow(msg));
 }
 
+export function errorQuit(msg: string, code: number = -1) {
+  return new Promise((resolve) => {
+    console.error(msg);
+    process.exitCode = code;
+  });
+}
+
 const R = "\x1b[0m";
 
 let stack = "";
@@ -114,6 +121,7 @@ function f(code: string, str: string): any {
 
 interface C {
   dim(str?: string): C;
+  red(str?: string): C;
   green(str?: string): C;
   yellow(str?: string): C;
   cyan(str?: string): C;
@@ -122,6 +130,7 @@ interface C {
 export const c: C = {
   dim: (str) => f("\x1b[2m", str),
 
+  red: (str) => f("\x1b[31m", str),
   green: (str) => f("\x1b[32m", str),
   yellow: (str) => f("\x1b[33m", str),
   cyan: (str) => f("\x1b[36m", str)
