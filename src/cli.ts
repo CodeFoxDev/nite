@@ -63,9 +63,23 @@ async function getPackageContent(root: string, specified: string) {
 }
 
 async function bindCliShortcuts() {
-  /* const rl = readLine.createInterface({ input: process.stdin });
+  let { stdin } = process;
 
-  rl.on("line", (i) => {
-    if (i === "h") console.log("help");
-  }); */
+  stdin
+    .setRawMode(true)
+    .resume()
+    .setEncoding("utf-8")
+    .on("data", (i: string) => {
+      if (i === "\u0003" || i === "q") process.exit();
+      else if (i === "h") {
+        console.log(`
+  Shortcuts
+  ${c.dim("press")} r ${c.dim("to restart server")}
+  ${c.dim("press")} c ${c.dim("to clear console")}
+  ${c.dim("press")} q ${c.dim("to quit")}`);
+      } else if (i === "c") {
+        console.clear();
+        console.log(`${c.dim("console cleared")}`);
+      }
+    });
 }

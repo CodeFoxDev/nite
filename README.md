@@ -1,8 +1,9 @@
 ## TODO
 
 - dev
-  - Custom esm module loader
-  - Rollup like plugin integrations
+  - [x] Rollup default options
+  - [x] Custom esm module loader
+  - [ ] Rollup like plugin integrations
     - hooks
       > Rollup hooks
       - [ ] options
@@ -39,7 +40,7 @@
       > Fixes
       - [ ] Remove context from config* hooks, and update context on other hooks
     - [x] ordering
-    - loading
+    - [ ] loading
       - Allow rollup-only plugins to load with `apply="buid"` and `enfore="post"`
         ```js
         plugins: [
