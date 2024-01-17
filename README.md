@@ -69,6 +69,15 @@
   - [ ] Use rollup to build project
     - [ ] Apply settings
     - [ ] Include plugins that apply on build
+- Server
+  - Options
+    - [ ] Manually register loader (`server.register()` or `server.registerLoader()`)
+  - [ ] Move esm loader registration to createServer
+    - [ ] Maybe move plugin container to loader thread to avoid performance impact
+      - [ ] Build a 'bridge' to allow the server object to call functions on loader thread, etc.
+  - [ ] Move createServer to main thread
+    - This is to allow user to create the server themselfs, for integrating in other tools
+  - [ ] Function to restart server
 - DX
   - Proper error handling
     - Nodejs operations with errorcodes
@@ -120,4 +129,4 @@
 - https://vitejs.dev/guide/api-plugin.html#plugin-ordering
 - https://esbuild.github.io/api/#js-sync
 
-https://www.npmjs.com/package/nightly
+- https://www.npmjs.com/package/nightly

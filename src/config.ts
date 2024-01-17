@@ -105,6 +105,12 @@ export interface InlineConfig extends UserConfig {
    * leave empty (or null) for default locations, and set to false to disable config file
    */
   configFile?: string | false;
+
+  /**
+   * Automatically register the es module loader
+   * @default true
+   */
+  autoRegister?: boolean;
 }
 
 export type ResolvedJsonOptions = Readonly<{

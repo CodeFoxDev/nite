@@ -23,6 +23,21 @@ export interface NiteDevServer {
    * The modulegraph instance that tracks resolveId, load and transform hooks on the modules
    */
   moduleGraph: ModuleGraph;
+
+  /**
+   * Registers the es module loader
+   */
+  register(): Promise<void>;
+  /**
+   * Restart the server
+   *
+   * @param forceOptimize Force the optimizer to re-bundle
+   */
+  restart(forceOptimize?: boolean): Promise<void>;
+  /**
+   * Stops the server
+   */
+  close(): Promise<void>;
 }
 
 export interface ServerOptions {
@@ -49,7 +64,13 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
     config,
     //watcher,
     moduleGraph,
-    pluginContainer: container
+    pluginContainer: container,
+
+    async register() {},
+
+    async restart(forceOptimize = false) {},
+
+    async close() {}
   };
 
   return server;
