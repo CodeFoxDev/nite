@@ -30,11 +30,11 @@ cli
 
     // TODO: Pass cli options to the loader
     // TODO: Return instance to the server, or some way to interact with it here
-    const { register } = await import("./loader/register");
-    const t = await register(import.meta.url);
+    //const { register } = await import("./register");
+    //const t = await register({}, import.meta.url);
 
     await bindCliShortcuts();
-    console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${t} ms`);
+    console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${-1} ms`);
     console.log(`  ${c.dim().green("➜")}  ${c.dim("press")} h ${c.dim("to show help")}`);
 
     // TODO: Wrap with try {} to catch and parse all errors

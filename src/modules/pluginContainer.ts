@@ -1,8 +1,7 @@
 // https://github.com/preactjs/wmr/blob/main/packages/wmr/src/lib/rollup-plugin-container.js
 
 // TODO: modify plugin to only include the useable methods
-import type { Plugin, SortedPlugin, PluginContext, PluginContainer, Hook } from ".";
-import type { ModuleFormat } from "node:module";
+import type { SortedPlugin, PluginContext, PluginContainer } from ".";
 import type { ModuleGraph } from "./moduleGraph";
 import type { ResolvedConfig } from "config";
 import type { FSWatcher } from "chokidar";
@@ -10,8 +9,6 @@ import { performance } from "node:perf_hooks";
 import { PartialLogger } from "utils/logger";
 import { isProjectFile, normalizeId } from "utils/id";
 import { getSortedPluginsByHook, getHookHandler } from "../plugins";
-import { analyzeImports } from "./optimizer";
-import { Once } from "utils/run";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 

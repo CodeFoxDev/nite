@@ -1,9 +1,10 @@
 import type { ResolvedConfig, InlineConfig } from "config";
 import type { FSWatcher, WatchOptions } from "chokidar";
 import type { PluginContainer } from "../modules";
-import * as chokidar from "chokidar";
+import { register, MessageBus } from "register";
 import { resolveConfig } from "config";
-import { createPluginContainer, ModuleGraph } from "../modules";
+import { createPluginContainer, ModuleGraph } from "modules";
+import * as chokidar from "chokidar";
 
 export interface NiteDevServer {
   /**
@@ -60,18 +61,27 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
   const moduleGraph = new ModuleGraph();
   const container = createPluginContainer(config, moduleGraph);
 
+  let messageBus = new MessageBus();
+
   let server: NiteDevServer = {
     config,
     //watcher,
     moduleGraph,
     pluginContainer: container,
 
-    async register() {},
+    async register() {
+      if (messageBus.port) return;
+      const { port, time } = await register(config, import.meta.url);
+      messageBus.setPort(port);
+    },
 
     async restart(forceOptimize = false) {},
 
     async close() {}
   };
+
+  inlineConfig.autoRegister ??= true;
+  if (inlineConfig.autoRegister === true) await server.register();
 
   return server;
 }

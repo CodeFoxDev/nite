@@ -8,7 +8,7 @@ export default defineConfig([
     input: {
       cli: "src/cli.ts",
       index: "src/index.ts",
-      "loader/index": "src/loader/index.ts"
+      loader: "src/loader.ts"
     },
     // Figure out how to include some modules (like cac)
     external: [

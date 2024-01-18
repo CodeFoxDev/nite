@@ -1,12 +1,12 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
-import type * as rollup from "rollup";
+import type { ResolvedConfig } from "config";
 import type { ModuleGraph, PluginContainer } from "modules";
 import type { NiteDevServer } from "server";
+import type * as rollup from "rollup";
 import { performance } from "node:perf_hooks";
 import { createServer } from "server";
-import { FileUrl, isVirtual, normalizeId, normalizeNodeHook } from "utils/id";
-import { Logger } from "utils/logger";
+import { FileUrl, isVirtual, normalizeId, normalizeNodeHook } from "utils";
 import { detectSyntax } from "mlly";
 
 export type nextResolve = (
@@ -15,10 +15,19 @@ export type nextResolve = (
 ) => ResolveFnOutput | Promise<ResolveFnOutput>;
 export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promise<LoadFnOutput>;
 
-const logger = new Logger(["loader"]);
+export interface MessagePortData {
+  initialized: number;
+}
+
+export interface MessagePortValue {
+  event: keyof MessagePortData;
+  data: any;
+}
+
 let server: NiteDevServer;
 let container: PluginContainer;
 let baseImporter: string;
+let config: ResolvedConfig;
 
 // Initialize the server in an async block, to avoid top-level await
 async function init() {
@@ -30,12 +39,26 @@ async function init() {
 
 const _i = init();
 
-export async function initialize({ port, importer }: { port: MessagePort; importer: string }) {
-  baseImporter = importer;
-  if (container) port.postMessage("initialized");
+export async function initialize({
+  _port,
+  _config,
+  _importer
+}: {
+  _port: MessagePort;
+  _config: ResolvedConfig;
+  _importer: string;
+}) {
+  baseImporter = _importer;
+  config = _config;
+  if (container) _port.postMessage("initialized");
   _i.then((val) => {
-    port.postMessage(val);
+    const data: MessagePortValue = {
+      event: "initialized",
+      data: val
+    };
+    _port.emit("message", data);
   });
+  // TODO: Allow messageBus to interact with pluginContainer
 }
 
 export async function resolve(
