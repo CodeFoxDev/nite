@@ -8,7 +8,7 @@ import type { FSWatcher } from "chokidar";
 import { performance } from "node:perf_hooks";
 import { PartialLogger } from "utils/logger";
 import { isProjectFile, normalizeId } from "utils/id";
-import { getSortedPluginsByHook, getHookHandler } from "../plugins";
+import { getSortedPluginsByHook } from "../plugins";
 
 const logger = new PartialLogger(["plugins", "hooks"]);
 

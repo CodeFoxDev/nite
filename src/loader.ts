@@ -3,9 +3,11 @@ import type { MessagePort } from "node:worker_threads";
 import type { ResolvedConfig } from "config";
 import type { ModuleGraph, PluginContainer } from "modules";
 import type { NiteDevServer } from "server";
+import type { MessagePortData, MessagePortValue } from "bus";
 import type * as rollup from "rollup";
 import { performance } from "node:perf_hooks";
 import { createServer } from "server";
+import { MessageBus } from "bus";
 import { FileUrl, isVirtual, normalizeId, normalizeNodeHook } from "utils";
 import { detectSyntax } from "mlly";
 
@@ -15,14 +17,7 @@ export type nextResolve = (
 ) => ResolveFnOutput | Promise<ResolveFnOutput>;
 export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promise<LoadFnOutput>;
 
-export interface MessagePortData {
-  initialized: number;
-}
-
-export interface MessagePortValue {
-  event: keyof MessagePortData;
-  data: any;
-}
+const messageBus = new MessageBus();
 
 let server: NiteDevServer;
 let container: PluginContainer;
@@ -48,6 +43,7 @@ export async function initialize({
   _config: ResolvedConfig;
   _importer: string;
 }) {
+  messageBus.bind(_port);
   baseImporter = _importer;
   config = _config;
   if (container) _port.postMessage("initialized");

@@ -1,4 +1,4 @@
-import type { MessagePortData, MessagePortValue } from "loader";
+import type { MessagePortData, MessagePortValue } from "bus";
 import type { ResolvedConfig } from "config";
 import { register as n_register } from "node:module";
 import { MessageChannel, MessagePort } from "node:worker_threads";
@@ -20,7 +20,7 @@ export async function register(config: ResolvedConfig, importer: string): Promis
   return new Promise((resolve: (data: RegisterResult) => any) => {
     port.on("message", (val: MessagePortValue) => {
       if (val.event === "initialized") {
-        const time: MessagePortData["initialized"] = val.data;
+        const time: MessagePortData["initialized"]["res"] = val.data;
         resolve({
           time,
           port
@@ -28,35 +28,4 @@ export async function register(config: ResolvedConfig, importer: string): Promis
       }
     });
   });
-}
-
-export class MessageBus {
-  port: MessagePort;
-  listeners: {
-    event: string;
-    cb: Function;
-  }[];
-
-  constructor(port?: MessagePort) {
-    this.listeners = [];
-    if (port) this.setPort(port);
-  }
-
-  setPort(port: MessagePort) {
-    this.port = port;
-    this.port.on("message", (val: MessagePortValue) => {
-      if (!val) return;
-      const ls = this.listeners.filter((e) => e.event === val.event);
-      for (const l of ls) l.cb(val.data);
-    });
-  }
-
-  on<T extends keyof MessagePortData>(event: T, cb: (data: MessagePortData[T]) => any) {
-    this.listeners.push({ event, cb });
-  }
-
-  emit<T extends keyof MessagePortData>(event: T, data: MessagePortData[T]) {
-    if (!this.port) return;
-    this.port.emit("message", { event, data });
-  }
 }

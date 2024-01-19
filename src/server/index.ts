@@ -1,7 +1,8 @@
 import type { ResolvedConfig, InlineConfig } from "config";
 import type { FSWatcher, WatchOptions } from "chokidar";
 import type { PluginContainer } from "../modules";
-import { register, MessageBus } from "register";
+import { register } from "register";
+import { MessageBus } from "bus";
 import { resolveConfig } from "config";
 import { createPluginContainer, ModuleGraph } from "modules";
 import * as chokidar from "chokidar";
@@ -18,10 +19,12 @@ export interface NiteDevServer {
   //watcher: FSWatcher | null;
   /**
    * The plugin container invoked by nite
+   * this will go through the custom `MessageBus` because the actual pluginContainer is on sepearte thread
    */
   pluginContainer: PluginContainer;
   /**
    * The modulegraph instance that tracks resolveId, load and transform hooks on the modules
+   * this will go through the custom `MessageBus` because the actual moduleGraph is on sepearte thread
    */
   moduleGraph: ModuleGraph;
 
@@ -72,7 +75,7 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
     async register() {
       if (messageBus.port) return;
       const { port, time } = await register(config, import.meta.url);
-      messageBus.setPort(port);
+      messageBus.bind(port);
     },
 
     async restart(forceOptimize = false) {},
