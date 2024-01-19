@@ -1,12 +1,23 @@
-import type { MessagePort } from "node:worker_threads"
+import type { MessagePort } from "node:worker_threads";
+import type { ModuleNode } from "modules";
+import type { ResolvedConfig, InlineConfig } from "config";
 import type * as rollup from "rollup";
 
 export type MessagePortData = {
-  "bus:bind": { args: null; res: null }
-  "bus:bindSuccess": { args: null; res: null }
-  initialized: {
+  "bus:bind": { args: null; res: void }
+  "bus:bindSuccess": { args: null; res: void }
+  "loader:init": {
     args: null;
     res: number;
+  }
+  // Plugin container
+  "container:config": {
+    args: { config: InlineConfig; env: { mode: string; command: string }}
+    res: InlineConfig | void
+  }
+  "container:configResolved": {
+    args: { config: ResolvedConfig }
+    res: void;
   }
   "container:resolveId": {
     args: { id: string; importer: string; }
@@ -19,6 +30,19 @@ export type MessagePortData = {
   "container:transform": {
     args: { id: string; code: string; };
     res: rollup.TransformResult
+  }
+  // Module graph
+  "graph:getModulesById": {
+    args: { id: string }
+    res: ModuleNode | undefined
+  }
+  "graph:getModulesByFile": {
+    args: { file: string }
+    res: ModuleNode | undefined
+  }
+  "graph:ensureEntryFromFile": {
+    args: { file: string }
+    res: ModuleNode
   }
 }
 
@@ -41,7 +65,7 @@ export class MessageBus {
   }
 
   // TODO: Make this async to wait for bind confirmation
-  bind(port: MessagePort) {
+  async bind(port: MessagePort) {
     this.port = port;
     this.port.on("message", (val: MessagePortValue) => {
       if (!val) return;

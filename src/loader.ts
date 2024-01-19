@@ -18,42 +18,32 @@ export type nextResolve = (
 export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promise<LoadFnOutput>;
 
 const messageBus = new MessageBus();
+let baseImporter: string;
 
 let server: NiteDevServer;
 let container: PluginContainer;
-let baseImporter: string;
 let config: ResolvedConfig;
 
 // Initialize the server in an async block, to avoid top-level await
-async function init() {
+async function _init() {
   const first = Date.now();
   server = await createServer({});
   container = server.pluginContainer;
   return Date.now() - first;
 }
 
-const _i = init();
+const init = _init();
 
-export async function initialize({
-  _port,
-  _config,
-  _importer
-}: {
-  _port: MessagePort;
-  _config: ResolvedConfig;
-  _importer: string;
+export async function initialize(i: {
+  port: MessagePort;
+  config: ResolvedConfig;
+  importer: string;
 }) {
-  messageBus.bind(_port);
-  baseImporter = _importer;
-  config = _config;
-  if (container) _port.postMessage("initialized");
-  _i.then((val) => {
-    const data: MessagePortValue = {
-      event: "initialized",
-      data: val
-    };
-    _port.emit("message", data);
-  });
+  baseImporter = i.importer;
+  config = i.config;
+  await messageBus.bind(i.port);
+  if (typeof init === "number") i.port.emit("message", { event: "loader:init", data: init });
+  else init.then((val) => i.port.emit("message", { event: "loader:init", data: val }));
   // TODO: Allow messageBus to interact with pluginContainer
 }
 

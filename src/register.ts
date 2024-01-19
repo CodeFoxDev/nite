@@ -19,8 +19,8 @@ export async function register(config: ResolvedConfig, importer: string): Promis
 
   return new Promise((resolve: (data: RegisterResult) => any) => {
     port.on("message", (val: MessagePortValue) => {
-      if (val.event === "initialized") {
-        const time: MessagePortData["initialized"]["res"] = val.data;
+      if (val.event === "loader:init") {
+        const time: MessagePortData["loader:init"]["res"] = val.data;
         resolve({
           time,
           port
