@@ -32,6 +32,8 @@ export async function resolvePlugins(
   ];
 }
 
+export async function resolvePluginsFromConfig(config: ResolvedConfig) {}
+
 export function sortUserPlugins(plugins: Plugin[] | undefined): [Plugin[], Plugin[], Plugin[]] {
   const prePlugins: Plugin[] = [];
   const normalPlugins: Plugin[] = [];

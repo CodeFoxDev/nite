@@ -1,12 +1,10 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
 import type { ResolvedConfig } from "config";
-import type { ModuleGraph, PluginContainer } from "modules";
-import type { NiteDevServer } from "server";
+import { ModuleGraph, PluginContainer, createPluginContainer } from "modules";
 import type { MessagePortData, MessagePortValue } from "bus";
 import type * as rollup from "rollup";
 import { performance } from "node:perf_hooks";
-import { createServer } from "server";
 import { MessageBus } from "bus";
 import { FileUrl, isVirtual, normalizeId, normalizeNodeHook } from "utils";
 import { detectSyntax } from "mlly";
@@ -20,30 +18,18 @@ export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput 
 const messageBus = new MessageBus();
 let baseImporter: string;
 
-let server: NiteDevServer;
 let container: PluginContainer;
+let moduleGraph: ModuleGraph;
 let config: ResolvedConfig;
 
-// Initialize the server in an async block, to avoid top-level await
-async function _init() {
-  const first = Date.now();
-  server = await createServer({});
-  container = server.pluginContainer;
-  return Date.now() - first;
-}
-
-const init = _init();
-
-export async function initialize(i: {
-  port: MessagePort;
-  config: ResolvedConfig;
-  importer: string;
-}) {
+export async function initialize(i: { port: MessagePort; config: ResolvedConfig; importer: string }) {
   baseImporter = i.importer;
   config = i.config;
+
+  moduleGraph = new ModuleGraph();
+  container = createPluginContainer(config, moduleGraph);
+
   await messageBus.bind(i.port);
-  if (typeof init === "number") i.port.emit("message", { event: "loader:init", data: init });
-  else init.then((val) => i.port.emit("message", { event: "loader:init", data: val }));
   // TODO: Allow messageBus to interact with pluginContainer
 }
 
@@ -64,7 +50,7 @@ export async function resolve(
   let id = typeof res == "string" ? res : res.id;
 
   // Add total time to the moduleGraph
-  const mod = server.moduleGraph.getModulesByFile(id);
+  const mod = moduleGraph.getModulesByFile(id);
   if (mod) mod.nodeResolveTime = performance.now() - s;
 
   return {
@@ -86,7 +72,7 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   if (!lRes) return nextLoad(url, context);
   let source = typeof lRes == "string" ? lRes : lRes.code;
 
-  const mod = server.moduleGraph.getModulesByFile(id);
+  const mod = moduleGraph.getModulesByFile(id);
   const cached = mod.getCachedModule();
   const isSame = mod.compareCachedModule();
   if (cached !== null && isSame === true && !isVirtual(id)) {

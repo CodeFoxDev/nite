@@ -142,7 +142,6 @@ export type ResolvedConfig = Readonly<
     envDir: string;
     command: "build" | "serve";
     mode: "development" | "build";
-    plugins: readonly Plugin[];
     optimizeDeps: ResolvedOptimizeDepsOptions;
     json: ResolvedJsonOptions;
     esbuild: ESBuildOptions;
@@ -196,7 +195,6 @@ export async function resolveConfig(inlineConfig: InlineConfig, command: "build"
     envDir,
     command,
     mode,
-    plugins: [],
     optimizeDeps: resolveOptimizeDepsOptions(config),
     json: {
       namedExports: config.json?.stringify ? false : config.json?.namedExports ?? true,
@@ -214,10 +212,10 @@ export async function resolveConfig(inlineConfig: InlineConfig, command: "build"
     }
   };
 
-  const resolvedPlugins = await resolvePlugins(resolved, prePlugins, normalPlugins, postPlugins);
+  /* const resolvedPlugins = await resolvePlugins(resolved, prePlugins, normalPlugins, postPlugins);
   (resolved.plugins as Plugin[]) = resolvedPlugins;
 
-  runConfigResolvedHook(resolved, resolvedPlugins);
+  runConfigResolvedHook(resolved, resolvedPlugins); */
 
   return resolved;
 }

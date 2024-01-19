@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import * as readLine from "node:readline/promises";
+import { createServer } from "server";
 import { normalizePath, normalizeNodeHook } from "utils/id";
 import { c, errorQuit } from "utils/logger";
 import { VERSION } from "./constants";
@@ -32,6 +33,7 @@ cli
     // TODO: Return instance to the server, or some way to interact with it here
     //const { register } = await import("./register");
     //const t = await register({}, import.meta.url);
+    const server = await createServer({});
 
     await bindCliShortcuts();
     console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${-1} ms`);
