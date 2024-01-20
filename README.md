@@ -78,6 +78,12 @@
   - [ ] Move createServer to main thread
     - This is to allow user to create the server themselfs, for integrating in other tools
   - [ ] Function to restart server
+  - [ ] Only register functions on loader thread and use messagebus to communicate form main thread
+  - MessageBus
+    - [ ] Create `BusNode` to add to classes to more easily create function interfaces
+    - [ ] Improve communications
+    - [ ] Create function interfaces
+    - [ ] Maybe create a seperate module from this?
 - DX
   - Proper error handling
     - Nodejs operations with errorcodes
