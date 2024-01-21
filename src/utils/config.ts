@@ -1,12 +1,12 @@
 import { isObject } from "./values";
 
 // Merges the config, the first value has the highest priority
-export function mergeConfig(defaults: Record<string, any>, overrides: Record<string, any>): Record<string, any> {
+export function mergeConfig<T>(defaults: T, overrides: Record<string, any>): T {
   if (!overrides) return defaults;
   if (!isObject(defaults) || !isObject(overrides)) {
     throw new Error("Cannot merge config, if parameters aren't of type object");
   }
-  return mergeConfigRecursive(defaults, overrides);
+  return mergeConfigRecursive(defaults, overrides) as T;
 }
 
 function mergeConfigRecursive(defaults: Record<string, any>, overrides: Record<string, any>): Record<string, any> {

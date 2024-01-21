@@ -133,11 +133,15 @@ export type ResolvedBuildOptions = Readonly<{
   emptyOutDir: boolean | null;
 }>;
 
-export type ResolvedConfig = Readonly<
+/**
+ * The config available to the main thread, mostly similar to Entire config, except for plugins which are only loaded on the loader thread
+ */
+export type ClientConfig = Readonly<
   Omit<UserConfig, "plugins" | "optimizeDeps" | "build"> & {
     configFile: string | null;
     inlineConfig: InlineConfig;
     root: string;
+    projectRoot: string;
     cacheDir: string;
     envDir: string;
     command: "build" | "serve";
@@ -151,12 +155,25 @@ export type ResolvedConfig = Readonly<
   }
 >;
 
-export async function resolveConfig(inlineConfig: InlineConfig, command: "build" | "serve"): Promise<ResolvedConfig> {
+export type ResolvedConfig = Readonly<
+  ClientConfig & {
+    plugins: readonly Plugin[];
+  }
+>;
+
+export async function resolveConfig(inlineConfig: InlineConfig, command: "build" | "serve"): Promise<ClientConfig> {
   let config: InlineConfig = inlineConfig;
   let mode = config.mode ?? "development";
   if (!!process.env.NODE_ENV) process.env.NODE_ENV = mode;
 
   const configEnv: ConfigEnv = { mode, command };
+
+  // TODO: Add support for other default paths (*.ts)
+  const resolvedConfigFile = (() => {
+    if (config.configFile === false) return undefined;
+    else if (typeof config.configFile === "string") return config.configFile;
+    else return path.resolve(process.cwd(), "nite.config.js");
+  })();
 
   if (config.configFile !== false) {
     const loadResult = await loadConfigFromFile(config.configFile);
@@ -168,29 +185,19 @@ export async function resolveConfig(inlineConfig: InlineConfig, command: "build"
   mode = inlineConfig.mode || config.mode || mode;
   configEnv.mode = mode;
 
-  const rawUserPlugins = ((await asyncFlatten(config.plugins || [])) as Plugin[]).filter((p: Plugin) => {
-    if (!p) return false;
-    else if (!p.apply) return true;
-    else if (typeof p.apply == "function") return p.apply({ ...config, mode });
-    else return p.apply === command;
-  });
-
-  const [prePlugins, normalPlugins, postPlugins] = sortUserPlugins(rawUserPlugins);
-  const userPlugins = [...prePlugins, ...normalPlugins, ...postPlugins];
-  config = await runConfigHook(config, userPlugins, configEnv);
-
   const resolvedRoot = normalizePath(config.root ? path.resolve(config.root) : process.cwd());
 
   // TODO: Check if these directories exist
   const envDir = config.envDir ? normalizePath(path.resolve(resolvedRoot, config.envDir)) : resolvedRoot;
   const cacheDir = normalizePath(path.resolve(resolvedRoot, config.envDir ? config.envDir : "node_modules/.nite"));
 
-  let resolved: ResolvedConfig;
+  let resolved: ClientConfig;
 
   resolved = {
-    configFile: config.configFile ? normalizePath(config.configFile) : undefined,
+    configFile: normalizePath(resolvedConfigFile),
     inlineConfig,
     root: resolvedRoot,
+    projectRoot: normalizePath(path.dirname(resolvedConfigFile)),
     cacheDir,
     envDir,
     command,
@@ -211,11 +218,6 @@ export async function resolveConfig(inlineConfig: InlineConfig, command: "build"
       rollupOptions: {}
     }
   };
-
-  /* const resolvedPlugins = await resolvePlugins(resolved, prePlugins, normalPlugins, postPlugins);
-  (resolved.plugins as Plugin[]) = resolvedPlugins;
-
-  runConfigResolvedHook(resolved, resolvedPlugins); */
 
   return resolved;
 }
@@ -242,7 +244,7 @@ const __dirname = __nite_fileUrlToPath(new URL('.', import.meta.url));`
       }
     },
     config.optimizeDeps?.esbuildOptions
-  );
+  ) as ESBuildOptions;
 
   return {
     include: config.optimizeDeps?.include ?? [],
@@ -252,7 +254,7 @@ const __dirname = __nite_fileUrlToPath(new URL('.', import.meta.url));`
   };
 }
 
-async function loadConfigFromFile(file?: string, root: string = process.cwd()) {
+export async function loadConfigFromFile(file?: string, root: string = process.cwd()) {
   let resolved: string = null;
 
   if (file) {
@@ -286,26 +288,5 @@ async function loadConfigFromFile(file?: string, root: string = process.cwd()) {
     };
   } catch (e) {
     logger.error(`Failed to load config from ${normalizeNodeHook(resolved)}`, e);
-  }
-}
-
-async function runConfigHook(config: InlineConfig, plugins: Plugin[], configEnv: ConfigEnv) {
-  let conf = config;
-
-  for (const p of getSortedPluginsByHook("config", plugins)) {
-    const hook = p.config;
-    const handler = getHookHandler(hook);
-    if (!handler) continue;
-    const res = await handler(conf, configEnv);
-    if (res) conf = mergeConfig(conf, res);
-  }
-
-  return conf;
-}
-
-function runConfigResolvedHook(config: ResolvedConfig, plugins: Plugin[]) {
-  for (const p of getSortedPluginsByHook("configResolved", plugins)) {
-    const handler = getHookHandler(p.configResolved);
-    if (handler) handler(config);
   }
 }

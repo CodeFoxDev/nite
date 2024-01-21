@@ -1,7 +1,8 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
-import type { ResolvedConfig } from "config";
+import type { ClientConfig, ResolvedConfig } from "config";
 import { ModuleGraph, PluginContainer, createPluginContainer } from "modules";
+import { resolvePluginsToConfig } from "plugins";
 import type { MessagePortData, MessagePortValue } from "bus";
 import type * as rollup from "rollup";
 import { performance } from "node:perf_hooks";
@@ -22,13 +23,12 @@ let container: PluginContainer;
 let moduleGraph: ModuleGraph;
 let config: ResolvedConfig;
 
-export async function initialize(i: { port: MessagePort; config: ResolvedConfig; importer: string }) {
+export async function initialize(i: { port: MessagePort; config: ClientConfig; importer: string }) {
   baseImporter = i.importer;
-  config = i.config;
+  config = await resolvePluginsToConfig(i.config);
 
   moduleGraph = new ModuleGraph();
   container = createPluginContainer(config, moduleGraph);
-
   await messageBus.bind(i.port);
   // TODO: Allow messageBus to interact with pluginContainer
 }

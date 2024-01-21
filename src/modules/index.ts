@@ -1,6 +1,6 @@
 import type * as rollup from "rollup";
 import type { ObjectHook } from "rollup";
-import type { ResolvedConfig, InlineConfig } from "config";
+import type { ResolvedConfig, InlineConfig, ClientConfig } from "config";
 import type { ModuleGraph } from "./moduleGraph";
 import { Logger } from "utils/logger";
 

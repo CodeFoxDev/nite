@@ -1,5 +1,8 @@
 import type { ObjectHook } from "rollup";
 import type { Plugin, HookHandler, PluginWithRequiredHook, SortedPlugin } from "modules";
+import type { ClientConfig, ResolvedConfig, InlineConfig, ConfigEnv } from "config";
+import { loadConfigFromFile } from "config";
+import { asyncFlatten, mergeConfig } from "utils";
 
 import PluginAlias from "./alias";
 import PluginOptimizedDeps from "./optimizeDeps";
@@ -8,7 +11,6 @@ import PluginESBuild from "./esbuild";
 import PluginEntryTime from "./entryTime";
 import PluginENV from "./env";
 import PluginDefault from "./default";
-import { ResolvedConfig } from "config";
 
 export async function resolvePlugins(
   config: ResolvedConfig,
@@ -32,7 +34,37 @@ export async function resolvePlugins(
   ];
 }
 
-export async function resolvePluginsFromConfig(config: ResolvedConfig) {}
+export async function resolvePluginsToConfig(config: ClientConfig): Promise<ResolvedConfig> {
+  const l = await loadConfigFromFile(config.configFile);
+  const { plugins } = l.config;
+
+  const configEnv: ConfigEnv = { mode: config.mode, command: config.command };
+
+  const rawUserPlugins = ((await asyncFlatten(plugins || [])) as Plugin[]).filter((p: Plugin) => {
+    if (!p) return false;
+    else if (!p.apply) return true;
+    else if (typeof p.apply == "function") return p.apply({ ...config, mode: config.mode });
+    else return p.apply === config.command;
+  });
+
+  const [prePlugins, normalPlugins, postPlugins] = sortUserPlugins(rawUserPlugins);
+  const userPlugins = [...prePlugins, ...normalPlugins, ...postPlugins];
+  config = await runConfigHook(config, userPlugins, configEnv);
+
+  let resolved: ResolvedConfig = {
+    ...config,
+    plugins: []
+  };
+
+  const resolvedPlugins = await resolvePlugins(resolved, prePlugins, normalPlugins, postPlugins);
+  (resolved.plugins as Plugin[]) = resolvedPlugins;
+  runConfigResolvedHook(resolved, resolvedPlugins);
+
+  return {
+    ...config,
+    plugins: resolvedPlugins
+  };
+}
 
 export function sortUserPlugins(plugins: Plugin[] | undefined): [Plugin[], Plugin[], Plugin[]] {
   const prePlugins: Plugin[] = [];
@@ -84,4 +116,25 @@ function stripPlugin(plugin: Plugin): SortedPlugin {
 
 export function getHookHandler<T extends ObjectHook<Function>>(hook: T): HookHandler<T> {
   return (typeof hook == "function" ? hook : hook.handler) as HookHandler<T>;
+}
+
+async function runConfigHook(config: ClientConfig, plugins: Plugin[], configEnv: ConfigEnv) {
+  let conf = config;
+
+  for (const p of getSortedPluginsByHook("config", plugins)) {
+    const hook = p.config;
+    const handler = getHookHandler(hook);
+    if (!handler) continue;
+    const res = await handler(conf, configEnv);
+    if (res) conf = mergeConfig(conf, res);
+  }
+
+  return conf;
+}
+
+function runConfigResolvedHook(config: ResolvedConfig, plugins: Plugin[]) {
+  for (const p of getSortedPluginsByHook("configResolved", plugins)) {
+    const handler = getHookHandler(p.configResolved);
+    if (handler) handler(config);
+  }
 }

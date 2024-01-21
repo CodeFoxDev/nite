@@ -25,22 +25,12 @@ cli
   .option("-f, --force", "[boolean] Force the dependeny optimizer to rerun")
   .action(async (root: string, options) => {
     if (root === undefined) root = ".";
-    const resolvedRoot = path.resolve(process.cwd(), root);
-    const resolvePackage = await getPackageContent(resolvedRoot, root);
-    const resolvedEntry = normalizePath(path.resolve(resolvedRoot, resolvePackage.main));
-
-    // TODO: Pass cli options to the loader
-    // TODO: Return instance to the server, or some way to interact with it here
-    //const { register } = await import("./register");
-    //const t = await register({}, import.meta.url);
+    const s = Date.now();
     const server = await createServer({});
 
     await bindCliShortcuts();
-    console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${-1} ms`);
+    console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${Date.now() - s} ms`);
     console.log(`  ${c.dim().green("➜")}  ${c.dim("press")} h ${c.dim("to show help")}`);
-
-    // TODO: Wrap with try {} to catch and parse all errors
-    await import(normalizeNodeHook(resolvedEntry));
   });
 
 cli.command("build", "Builds the project").action(async (options) => {
