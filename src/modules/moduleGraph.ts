@@ -107,7 +107,7 @@ type DefaultResult = {
   time: number;
 };
 
-export type ResolveIdResult = Omit<DefaultResult, "code">;
+export type ResolveIdResult = Omit<DefaultResult, "code"> & { importer: string; specifier: string };
 export type LoadResult = DefaultResult;
 export type TransformResult = DefaultResult;
 

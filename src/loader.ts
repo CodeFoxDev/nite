@@ -1,7 +1,7 @@
 import type { ResolveHookContext, LoadHookContext, ResolveFnOutput, LoadFnOutput, ModuleFormat } from "node:module";
 import type { MessagePort } from "node:worker_threads";
 import type { ClientConfig, ResolvedConfig } from "config";
-import { ModuleGraph, PluginContainer, createPluginContainer } from "modules";
+import { ModuleGraph, ModuleNode, PluginContainer, createPluginContainer } from "modules";
 import { resolvePluginsToConfig } from "plugins";
 import type { MessagePortData, MessagePortValue } from "bus";
 import type * as rollup from "rollup";
@@ -44,6 +44,14 @@ export async function resolve(
   if (specifier.endsWith("?node")) return nextResolve(specifier.replace("?node", ""));
 
   const importer = context.parentURL === baseImporter ? undefined : normalizeId(context.parentURL);
+  /* const existMod: ModuleNode = await (() => {
+    return new Promise((resolve: (val: ModuleNode | undefined) => void) => {
+      moduleGraph.fileToModuleMap.forEach((e) => {
+        if (e.resolveIdResult.importer === importer && e.resolveIdResult.specifier === specifier) resolve(e);
+      });
+    });
+  })(); */
+
   // Inject resolveId hooks
   const res = await container.resolveId(normalizeId(specifier), importer);
   if (!res || (typeof res == "object" && !res.id)) return nextResolve(specifier);
@@ -66,8 +74,18 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
   if (!container) return nextLoad(url, context);
   if (url.endsWith("?node")) return nextLoad(url.replace("?node", ""), context);
 
-  // Inject load hooks
   const id = normalizeId(url);
+  const existMod = moduleGraph.getModulesByFile(id);
+  if (existMod !== undefined && existMod.transformResult.length > 0) {
+    const source = existMod.transformResult[existMod.transformResult.length - 1].code;
+    return {
+      shortCircuit: true,
+      format: determineFormat(url, context, source),
+      source
+    };
+  }
+
+  // Inject load hooks
   const lRes = await container.load(id);
   if (!lRes) return nextLoad(url, context);
   let source = typeof lRes == "string" ? lRes : lRes.code;
@@ -100,6 +118,7 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
 
   source = typeof tRes == "string" ? tRes : tRes.code;
   const format = determineFormat(url, context, source);
+  mod.format ??= format;
 
   // Add total time to the moduleGraph
   if (mod) mod.nodeLoadTime = performance.now() - s;

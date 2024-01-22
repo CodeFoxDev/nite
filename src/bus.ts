@@ -84,7 +84,7 @@ export class MessageBus {
       if (!val) return;
       if (val.event === "bus:bind" || val.event === "bus:bindSuccess") {
         if (val.event === "bus:bind") this.port.emit("message", { event: "bus:bindSuccess" });
-        else if (val.event === "bus:bindSuccess") console.log("Bound the MessageBus");
+        //else if (val.event === "bus:bindSuccess") console.log("Bound the MessageBus");
         return (this.bounded = true);
       } else if (val.event === "bus:register") {
         this.functions.push(val.data.event);

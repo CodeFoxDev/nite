@@ -71,6 +71,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
     },
     async resolveId(id, importer, _skip) {
       if (!id) return null;
+      const specifier = id;
       let resolved: string | null;
       const s = performance.now();
       // The name that gets added to the modulegraph
@@ -92,7 +93,9 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
       const mod = moduleGraph.ensureEntryFromFile(normalizeId(resolved));
       mod.resolveIdResult = {
         plugin: plugin.name,
-        time: performance.now() - s
+        time: performance.now() - s,
+        specifier,
+        importer
       };
       if (importer) {
         const importerMod = moduleGraph.ensureEntryFromFile(normalizeId(importer));

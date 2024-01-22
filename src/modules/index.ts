@@ -1,7 +1,7 @@
 import type * as rollup from "rollup";
 import type { ObjectHook } from "rollup";
 import type { ResolvedConfig, InlineConfig, ClientConfig } from "config";
-import type { ModuleGraph } from "./moduleGraph";
+import type { ModuleGraph, ModuleNode } from "./moduleGraph";
 import { Logger } from "utils/logger";
 
 const logger = new Logger(["plugins", "container"]);

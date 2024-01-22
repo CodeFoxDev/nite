@@ -107,6 +107,9 @@
   - Devtools with load/transform stack overview (like vite-plugin-inspect) (in seperate plugin?)
   - Statically analyze imported (ts) code to check for (type) errors, on seperate thread?
   - [ ] Add logLevel option to see debug logs
+  - Improve performance
+    - Specifically startup time
+      - Improve module bundling to solve this?
 - optimzeDeps
   - [x] Bundle the library into single file (like vite)
     - "Error: Cannot find module @rollup/rollup-win32-x64-msvc. npm has a bug related to optional dependencies" (with prebundled version of vite)
