@@ -88,9 +88,11 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
     async close() {}
   };
 
-  inlineConfig.autoRegister ??= true;
-  if (inlineConfig.autoRegister === true) server.register();
-  await server.start();
+  inlineConfig.autoStart ??= true;
+  if (inlineConfig.autoStart === true) {
+    server.register();
+    await server.start();
+  }
 
   return server;
 }

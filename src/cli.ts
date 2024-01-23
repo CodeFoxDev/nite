@@ -1,8 +1,4 @@
-import * as path from "node:path";
-import * as fs from "node:fs";
-import * as readLine from "node:readline/promises";
 import { createServer } from "server";
-import { normalizePath, normalizeNodeHook } from "utils/id";
 import { c, errorQuit } from "utils/logger";
 import { VERSION } from "./constants";
 import { cac } from "cac";
@@ -26,11 +22,13 @@ cli
   .action(async (root: string, options) => {
     if (root === undefined) root = ".";
     const s = Date.now();
-    const server = await createServer({});
+    const server = await createServer({ autoStart: false });
+    server.register();
 
     await bindCliShortcuts();
     console.log(`  ${c.green("NITE v0.1.0")}  ${c.dim("ready in")} ${Date.now() - s} ms`);
     console.log(`  ${c.dim().green("➜")}  ${c.dim("press")} h ${c.dim("to show help")}`);
+    await server.start();
   });
 
 cli.command("build", "Builds the project").action(async (options) => {
@@ -40,19 +38,6 @@ cli.command("build", "Builds the project").action(async (options) => {
 cli.help();
 cli.version(VERSION);
 cli.parse();
-
-async function getPackageContent(root: string, specified: string) {
-  const resolved = path.resolve(root, "package.json");
-  if (!fs.existsSync(resolved)) {
-    if (specified == ".") await errorQuit(`${c.red("No package.json found in the project root")}`);
-    else await errorQuit(`${c.red("Failed to locate specified entry file")}`);
-    // TODO: quit here because the file doesn't exist
-    return { main: "index.js" };
-  }
-  const content = fs.readFileSync(resolved, { encoding: "utf-8" });
-  const parsed = JSON.parse(content);
-  return parsed;
-}
 
 async function bindCliShortcuts() {
   let { stdin } = process;

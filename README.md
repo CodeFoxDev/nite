@@ -84,6 +84,7 @@
     - [ ] Improve communications
     - [ ] Create function interfaces
     - [ ] Maybe create a seperate module from this?
+  - [ ] Doesn't work on linux, looks like the leading slash from urls is removed?
 - DX
   - Proper error handling
     - Nodejs operations with errorcodes
@@ -130,7 +131,7 @@
 - Caching
   - [x] Implement cache comparing (with hash?)
   - [x] Use cache when loads are similar
-  - [x] Implement hook to cancel using cache (shouldTransformCachedModule, not sure if this is the right one, rollup documentation is a bit weird?)
+  - [x] Implement hook to cancel using cache (shouldTransformCachedModule)
   - [ ] Add config option to change / disable behaiviour
 
 - https://nodejs.org/api/module.html#customization-hooks

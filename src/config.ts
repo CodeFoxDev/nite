@@ -110,7 +110,7 @@ export interface InlineConfig extends UserConfig {
    * Automatically register the es module loader
    * @default true
    */
-  autoRegister?: boolean;
+  autoStart?: boolean;
 }
 
 export type ResolvedJsonOptions = Readonly<{

@@ -16,7 +16,7 @@ export type nextResolve = (
 ) => ResolveFnOutput | Promise<ResolveFnOutput>;
 export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promise<LoadFnOutput>;
 
-const messageBus = new MessageBus();
+const bus = new MessageBus();
 let baseImporter: string;
 
 let container: PluginContainer;
@@ -29,7 +29,10 @@ export async function initialize(i: { port: MessagePort; config: ClientConfig; i
 
   moduleGraph = new ModuleGraph();
   container = createPluginContainer(config, moduleGraph);
-  await messageBus.bind(i.port);
+  await bus.bind(i.port);
+
+  bus.addObject("container", container);
+  bus.addObject("moduleGraph", moduleGraph);
   // TODO: Allow messageBus to interact with pluginContainer
 }
 
@@ -44,13 +47,20 @@ export async function resolve(
   if (specifier.endsWith("?node")) return nextResolve(specifier.replace("?node", ""));
 
   const importer = context.parentURL === baseImporter ? undefined : normalizeId(context.parentURL);
-  /* const existMod: ModuleNode = await (() => {
+  const existMod: ModuleNode = await (() => {
     return new Promise((resolve: (val: ModuleNode | undefined) => void) => {
       moduleGraph.fileToModuleMap.forEach((e) => {
         if (e.resolveIdResult.importer === importer && e.resolveIdResult.specifier === specifier) resolve(e);
       });
+      resolve(undefined);
     });
-  })(); */
+  })();
+  if (existMod !== undefined && existMod.resolveIdResult)
+    return {
+      shortCircuit: true,
+      url: normalizeNodeHook(existMod.file),
+      format: existMod.format ?? existMod.file.startsWith("node:") ? "builtin" : undefined
+    };
 
   // Inject resolveId hooks
   const res = await container.resolveId(normalizeId(specifier), importer);
@@ -97,8 +107,6 @@ export async function load(url: string, context: LoadHookContext, nextLoad: next
     const sRes = await container.shouldTransformCachedModule({ code: source, id });
     if (sRes !== true) {
       const cachedCode = await cached.loadCache();
-      //console.log(cached, id, cachedCode !== null);
-      //console.log(`skipped id: ${id}`);
       return {
         shortCircuit: true,
         format: determineFormat(url, context, cachedCode),

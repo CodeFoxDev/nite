@@ -47,13 +47,22 @@ export type MessagePortData = {
   };
 };
 
+type BusEventHints = {
+  [k: string]: {
+    args: any;
+    res: any;
+  };
+};
+
 export interface MessagePortValue {
   event: keyof MessagePortData;
   data: any;
   time?: number;
 }
 
-export class MessageBus {
+// Port to codefoxdev/threadbus as package
+
+export class MessageBus<Hints extends BusEventHints> {
   bounded: boolean = false;
   port: MessagePort;
   listeners: {
@@ -113,7 +122,7 @@ export class MessageBus {
   /**
    * Emits an event to the bound port
    */
-  emit<T extends keyof MessagePortData>(event: T, data: MessagePortData[T]["args"]) {
+  emit<T>(event: T, data: T extends keyof Hints ? Hints[T]["args"] : any) {
     if (!this.port) return;
     this.port.emit("message", { event, data });
   }
@@ -155,4 +164,15 @@ export class MessageBus {
       data: { event }
     });
   }
+
+  /**
+   * Adds an interactable object to the event bus, which allows function and values from within to be accesible from the other thread,
+   * however parameters in the function must be cloneable, so callbacks are not permitted.
+   *
+   * If you get values or call functions from an other thread it will send an event which will get the value, or call the function on the thread it was registered.
+   * Which means that the values will be the same on both threads
+   * @param keys An array of the keys to expose, leave empty or null to expose all keys
+   * @param interactable Whether or not the value can be updated from another thread, functions and other non-cloneable values will never be updated, defaults to false
+   */
+  addObject<T extends Object>(namespace: string, object: T, keys?: (keyof T)[], interactable?: boolean) {}
 }
