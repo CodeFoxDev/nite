@@ -32,6 +32,9 @@ dependencies:
   rollup:
     specifier: ^4.9.5
     version: 4.9.5
+  threadbus:
+    specifier: link:../threadbus
+    version: link:../threadbus
 
 devDependencies:
   '@rollup/plugin-commonjs':

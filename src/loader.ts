@@ -3,10 +3,8 @@ import type { MessagePort } from "node:worker_threads";
 import type { ClientConfig, ResolvedConfig } from "config";
 import { ModuleGraph, ModuleNode, PluginContainer, createPluginContainer } from "modules";
 import { resolvePluginsToConfig } from "plugins";
-import type { MessagePortData, MessagePortValue } from "bus";
-import type * as rollup from "rollup";
 import { performance } from "node:perf_hooks";
-import { MessageBus } from "bus";
+import { Bus } from "threadbus";
 import { FileUrl, isVirtual, normalizeId, normalizeNodeHook } from "utils";
 import { detectSyntax } from "mlly";
 
@@ -16,23 +14,37 @@ export type nextResolve = (
 ) => ResolveFnOutput | Promise<ResolveFnOutput>;
 export type nextLoad = (url: string, context?: LoadHookContext) => LoadFnOutput | Promise<LoadFnOutput>;
 
-const bus = new MessageBus();
+let bus = new Bus();
 let baseImporter: string;
 
 let container: PluginContainer;
 let moduleGraph: ModuleGraph;
 let config: ResolvedConfig;
 
-export async function initialize(i: { port: MessagePort; config: ClientConfig; importer: string }) {
+export async function initialize(i: {
+  port: MessagePort;
+  config: ClientConfig;
+  importer: string;
+  sab: SharedArrayBuffer;
+}) {
   baseImporter = i.importer;
   config = await resolvePluginsToConfig(i.config);
 
   moduleGraph = new ModuleGraph();
   container = createPluginContainer(config, moduleGraph);
-  await bus.bind(i.port);
 
-  bus.addObject("container", container);
-  bus.addObject("moduleGraph", moduleGraph);
+  /* bus.expose("container", container);
+  bus.expose("moduleGraph", moduleGraph); */
+  const t = {
+    msg: "test fsfjsalf",
+    hi(msg) {
+      console.log("msg from expose:", msg);
+      console.log("msg prop value:", t.msg);
+    }
+  };
+  bus.expose("test", t, null, true);
+
+  bus.bind(i.port, i.sab);
   // TODO: Allow messageBus to interact with pluginContainer
 }
 

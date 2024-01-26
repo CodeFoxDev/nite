@@ -3,8 +3,8 @@ import type { FSWatcher, WatchOptions } from "chokidar";
 import type { PluginContainer } from "../modules";
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { register } from "register";
-import { MessageBus } from "bus";
+import { register } from "node:module";
+import { Bus } from "threadbus";
 import { resolveConfig } from "config";
 import { createPluginContainer, ModuleGraph } from "modules";
 import { normalizeNodeHook } from "utils";
@@ -66,7 +66,7 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
   //const watcher: FSWatcher | null =
   //  config.server.watch !== null ? chokidar.watch(config.root, config.server.watch) : null;
 
-  let messageBus = new MessageBus();
+  const bus = new Bus();
 
   let server: NiteDevServer = {
     config,
@@ -78,9 +78,21 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
     },
 
     async register() {
-      if (messageBus.port) return;
-      const { port, time } = await register(config, import.meta.url);
-      await messageBus.bind(port);
+      const { port, sab } = bus.createChannel();
+      register("../loader.js", {
+        parentURL: import.meta.url,
+        data: { number: 1, port, sab, config, importer: import.meta.url },
+        transferList: [port]
+      });
+      await bus.confirm();
+
+      const t = bus.getExposed<{
+        msg: Promise<string> | string;
+        hi: (msg: string) => Promise<void>;
+      }>("test");
+      await (t.msg = "hi");
+      console.log(await t.hi("eyss"));
+      //console.log("res:", t.msg);
     },
 
     async restart(forceOptimize = false) {},
@@ -90,7 +102,7 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
 
   inlineConfig.autoStart ??= true;
   if (inlineConfig.autoStart === true) {
-    server.register();
+    await server.register();
     await server.start();
   }
 
