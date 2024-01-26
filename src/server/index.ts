@@ -86,12 +86,12 @@ export async function createServer(inlineConfig: InlineConfig): Promise<NiteDevS
       });
       await bus.confirm();
 
-      const t = bus.getExposed<{
+      /* const t = bus.getExposed<{
         msg: Promise<string> | string;
         hi: (msg: string) => Promise<void>;
       }>("test");
       await (t.msg = "hi");
-      console.log(await t.hi("eyss"));
+      console.log(await t.hi("eyss")); */
       //console.log("res:", t.msg);
     },
 
