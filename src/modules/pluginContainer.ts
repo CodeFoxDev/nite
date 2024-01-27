@@ -19,6 +19,7 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
   const _pluginLogger = new PartialLogger(["plugins"]);
 
   // The value of the `this` property in a plugin hook
+  // TODO: switch to class to allow parallel hooks
   const ctx: PluginContext = {
     meta: {
       rollupVersion: "4.9.1", // TODO: read this from package.json?
@@ -26,15 +27,6 @@ export function createPluginContainer(config: ResolvedConfig, moduleGraph: Modul
     },
 
     moduleGraph,
-
-    /* cache: {
-      async get(id) {
-        return cache.get(id);
-      },
-      async set(id, src) {
-        return cache.set(id, src);
-      }
-    }, */
 
     resolve(id, importer, options) {
       return container.resolveId(id, importer);

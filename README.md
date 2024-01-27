@@ -71,19 +71,19 @@
     - [ ] Include plugins that apply on build
 - Server
   - Options
-    - [ ] Manually register loader (`server.register()` or `server.registerLoader()`)
-  - [ ] Move esm loader registration to createServer
-    - [ ] Maybe move plugin container to loader thread to avoid performance impact
-      - [ ] Build a 'bridge' to allow the server object to call functions on loader thread, etc.
-  - [ ] Move createServer to main thread
+    - [x] Manually register loader (`server.register()` or `server.registerLoader()`)
+  - [x] Move esm loader registration to createServer
+    - [x] Maybe move plugin container to loader thread to avoid performance impact
+      - [x] Build a 'bridge' to allow the server object to call functions on loader thread, etc.
+  - [x] Move createServer to main thread
     - This is to allow user to create the server themselfs, for integrating in other tools
   - [ ] Function to restart server
-  - [ ] Only register functions on loader thread and use messagebus to communicate form main thread
+  - [x] Only register functions on loader thread and use messagebus to communicate form main thread
   - MessageBus
-    - [ ] Create `BusNode` to add to classes to more easily create function interfaces
-    - [ ] Improve communications
-    - [ ] Create function interfaces
-    - [ ] Maybe create a seperate module from this?
+    - [x] Create `BusNode` to add to classes to more easily create function interfaces
+    - [x] Improve communications
+    - [x] Create function interfaces
+    - [x] Maybe create a seperate module from this?
   - [ ] Doesn't work on linux, looks like the leading slash from urls is removed?
 - DX
   - Proper error handling
